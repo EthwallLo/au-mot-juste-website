@@ -2,10 +2,53 @@ import Typewriter from "./components/typewriter";
 import ScrollButton from "./components/scrollButton";
 import ParcoursButton from "./components/parcoursButton";
 import CorrectionButton from "./components/correctionButton";
+import { getArticleImageUrl } from "./lib/articleImages";
+import { getPublishedBlogPosts } from "./lib/blog";
+import type { BlogPostPreview } from "./lib/blog";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function HomePage() {
+function formatArticleDate(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function getBackgroundImage(url: string) {
+  return `url(${JSON.stringify(url)})`;
+}
+
+export default async function HomePage() {
+  let latestArticles: BlogPostPreview[] = [];
+
+  try {
+    latestArticles = (await getPublishedBlogPosts()).slice(0, 3);
+  } catch {
+    latestArticles = [];
+  }
+
+  const latestArticleImages = new Map(
+    await Promise.all(
+      latestArticles.map(async (article) => [
+        article.id,
+        await getArticleImageUrl(article.cover_image_url, "/image-carnet.webp"),
+      ] as const),
+    ),
+  );
+  const latestArticlesGridClass =
+    latestArticles.length === 1
+      ? "grid gap-6 md:mx-auto md:max-w-xl"
+      : latestArticles.length === 2
+        ? "grid gap-6 md:mx-auto md:max-w-4xl md:grid-cols-2"
+        : "grid gap-6 md:grid-cols-3";
+
   return (
     <div>
       <section className="sr-only">
@@ -286,6 +329,101 @@ export default function HomePage() {
         </div>
         <div className="absolute left-2 top-1/2 -translate-y-1/2 bg-gray-200/50 text-gray-700 text-[10px] italic px-1 py-0.5 rounded rotate-90 origin-left">
           Photo : Jess Bailey / Unsplash
+        </div>
+      </section>
+
+      <section
+        id="derniers-articles"
+        aria-labelledby="derniers-articles-titre"
+        className="bg-white px-6 py-20 md:px-12"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#B76E79]">
+                Carnet de correction
+              </p>
+              <h2
+                id="derniers-articles-titre"
+                className="mt-3 text-3xl font-bold text-gray-800 after:mt-3 after:block after:h-1 after:w-[130px] after:bg-[#B76E79] after:content-['']"
+              >
+                Derniers articles
+              </h2>
+            </div>
+
+            <Link
+              href="/blog"
+              className="inline-flex w-fit rounded-md border border-[#B76E79] px-5 py-3 text-sm font-semibold text-[#B76E79] transition hover:bg-[#B76E79] hover:text-white"
+            >
+              Voir le blog
+            </Link>
+          </div>
+
+          {latestArticles.length === 0 ? (
+            <div className="mx-auto max-w-2xl border-l-4 border-[#B76E79] bg-[#fbf7f7] px-6 py-5 text-gray-700">
+              Les premiers articles arrivent bientôt. Je prépare des conseils
+              autour de la correction, de la relecture et de l&apos;écriture pour
+              vous aider à rendre vos textes plus clairs, plus fluides et plus
+              justes.
+            </div>
+          ) : (
+            <div className={latestArticlesGridClass}>
+              {latestArticles.map((article) => {
+                const date = formatArticleDate(article.published_at);
+                const articleImage =
+                  latestArticleImages.get(article.id) ?? "/image-carnet.webp";
+
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/blog/${article.slug}`}
+                    className="group flex h-full flex-col overflow-hidden rounded-md border border-[#eadbdd] bg-white shadow-sm transition hover:-translate-y-1 hover:border-[#B76E79]/60 hover:shadow-md"
+                  >
+                    <article className="flex h-full flex-col">
+                      <div
+                        className="relative h-48 bg-cover bg-center"
+                        style={{
+                          backgroundImage: getBackgroundImage(articleImage),
+                        }}
+                      >
+                        <div
+                          aria-hidden="true"
+                          className="absolute inset-0 bg-[#B76E79]/10"
+                        />
+                        {article.cover_image_source ? (
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 rotate-90 rounded bg-gray-200/70 px-1 py-0.5 text-[10px] italic text-gray-700 origin-left">
+                            {article.cover_image_source}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex flex-1 flex-col p-6">
+                        {date ? (
+                          <time
+                            dateTime={article.published_at ?? undefined}
+                            className="text-sm font-semibold text-[#B76E79]"
+                          >
+                            {date}
+                          </time>
+                        ) : null}
+                        <h3 className="mt-3 text-xl font-semibold leading-snug text-gray-900 transition group-hover:text-[#B76E79]">
+                          {article.title}
+                        </h3>
+                        {article.excerpt ? (
+                          <p className="mt-4 line-clamp-4 text-sm leading-7 text-gray-600">
+                            {article.excerpt}
+                          </p>
+                        ) : null}
+                        <span className="mt-6 inline-flex text-sm font-semibold text-[#B76E79]">
+                          Lire l&apos;article
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     </div>
