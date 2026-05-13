@@ -66,6 +66,12 @@ const formations = [
     period: "2023",
     icon: "/ecole-rose.svg",
   },
+  {
+    title: "Bachelor Responsable en ingénierie des logiciels (Bac+3)",
+    institution: "CESI",
+    period: "2021",
+    icon: "/ecole-rose.svg",
+  },
 ];
 
 const diplomes = [
