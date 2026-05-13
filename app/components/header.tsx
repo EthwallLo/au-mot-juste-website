@@ -51,6 +51,9 @@ export default function Header() {
             <NavLink href="/qui-suis-je">Qui suis-je</NavLink>
           </li>
           <li>
+            <NavLink href="/blog">Blog</NavLink>
+          </li>
+          <li>
             <NavLink href="/contact">Contact</NavLink>
           </li>
         </ul>
@@ -108,6 +111,11 @@ export default function Header() {
             <li>
               <NavLink href="/qui-suis-je" onClick={() => setOpen(false)}>
                 Qui suis-je
+              </NavLink>
+            </li>
+            <li>
+              <NavLink href="/blog" onClick={() => setOpen(false)}>
+                Blog
               </NavLink>
             </li>
             <li>
