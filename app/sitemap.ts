@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
+import { connection } from "next/server";
 import { BlogConfigError, getPublishedBlogPosts } from "./lib/blog";
 import { SITE_URL } from "./lib/seo";
 
-export const revalidate = 60;
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await connection();
   const pages: MetadataRoute.Sitemap = [
     "/",
     "/correction",

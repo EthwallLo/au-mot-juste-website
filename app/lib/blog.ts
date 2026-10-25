@@ -4,7 +4,7 @@ import { unstable_cache } from "next/cache";
 
 export const BLOG_CACHE_TAG = "blog-articles";
 
-export type BlogStatus = "draft" | "published";
+export type BlogStatus = "draft" | "scheduled" | "published";
 
 export type BlogPost = {
   id: string;
@@ -163,12 +163,32 @@ export function sanitizeBlogPostPayload(input: unknown): BlogPostMutation {
   const title = getString(payload.title, "title", { required: true });
   const slug = slugify(getString(payload.slug, "slug") || title);
   const content = getString(payload.content, "content", { required: true });
-  const status: BlogStatus =
-    payload.status === "published" ? "published" : "draft";
+  let status: BlogStatus =
+    payload.status === "published" || payload.status === "scheduled"
+      ? payload.status
+      : "draft";
   const publishedAt = getString(payload.published_at, "published_at");
+  const publicationTime = publishedAt ? Date.parse(publishedAt) : NaN;
+  const now = Date.now();
 
-  if (status === "published" && publishedAt && Number.isNaN(Date.parse(publishedAt))) {
+  if (status !== "draft" && publishedAt && Number.isNaN(publicationTime)) {
     throw new BlogInputError("La date de publication est invalide.");
+  }
+
+  if (status === "scheduled") {
+    if (!publishedAt) {
+      throw new BlogInputError("Choisissez une date et une heure pour planifier la publication.");
+    }
+
+    if (publicationTime <= now) {
+      throw new BlogInputError("La date de publication doit être dans le futur.");
+    }
+  }
+
+  // A future date must never make an article visible immediately, including
+  // requests from an older version of the editor.
+  if (status === "published" && publicationTime > now) {
+    status = "scheduled";
   }
 
   if (!slug) {
@@ -188,41 +208,75 @@ export function sanitizeBlogPostPayload(input: unknown): BlogPostMutation {
     ),
     status,
     published_at:
-      status === "published"
-        ? publishedAt || new Date().toISOString()
+      status !== "draft"
+        ? new Date(publishedAt || now).toISOString()
         : null,
   };
 }
 
-export const getPublishedBlogPosts = unstable_cache(
+function publicationIsDue(publishedAt: string | null, now = Date.now()) {
+  return publishedAt === null || Date.parse(publishedAt) <= now;
+}
+
+function withEffectiveStatus(post: BlogPost): BlogPost {
+  if (post.status === "draft") {
+    return post;
+  }
+
+  return {
+    ...post,
+    status: publicationIsDue(post.published_at) ? "published" : "scheduled",
+  };
+}
+
+// Cache the candidates, including future publications. Check the clock outside
+// the cache so an article becomes visible at its deadline without a cron job.
+const getPublicBlogPostCandidates = unstable_cache(
   () => queryArticles<BlogPostPreview>(
     `SELECT ${PUBLIC_FIELDS} FROM public.articles
-     WHERE status = 'published'
+     WHERE status IN ('published', 'scheduled')
      ORDER BY published_at DESC NULLS LAST, created_at DESC`,
   ),
-  ["neon-published-blog-posts"],
+  ["neon-public-blog-candidates"],
   { revalidate: 60, tags: [BLOG_CACHE_TAG] },
 );
 
-export const getPublishedBlogPostBySlug = unstable_cache(
+const getPublicBlogPostCandidateBySlug = unstable_cache(
   async (slug: string) => {
     const posts = await queryArticles<BlogPost>(
       `SELECT ${ARTICLE_FIELDS} FROM public.articles
-       WHERE slug = $1 AND status = 'published' LIMIT 1`,
+       WHERE slug = $1 AND status IN ('published', 'scheduled') LIMIT 1`,
       [slug],
     );
 
     return posts[0] ?? null;
   },
-  ["neon-published-blog-post"],
+  ["neon-public-blog-candidate"],
   { revalidate: 60, tags: [BLOG_CACHE_TAG] },
 );
 
+export async function getPublishedBlogPosts() {
+  const posts = await getPublicBlogPostCandidates();
+  const now = Date.now();
+
+  return posts.filter((post) => publicationIsDue(post.published_at, now));
+}
+
+export async function getPublishedBlogPostBySlug(slug: string) {
+  const post = await getPublicBlogPostCandidateBySlug(slug);
+
+  return post && publicationIsDue(post.published_at)
+    ? withEffectiveStatus(post)
+    : null;
+}
+
 export async function getAllBlogPosts() {
-  return queryArticles<BlogPost>(
+  const posts = await queryArticles<BlogPost>(
     `SELECT ${ARTICLE_FIELDS} FROM public.articles
      ORDER BY updated_at DESC, created_at DESC`,
   );
+
+  return posts.map(withEffectiveStatus);
 }
 
 export async function createBlogPost(input: unknown) {
@@ -236,7 +290,7 @@ export async function createBlogPost(input: unknown) {
       payload.cover_image_url, payload.cover_image_source, payload.status, payload.published_at],
   );
 
-  return posts[0];
+  return withEffectiveStatus(posts[0]);
 }
 
 export async function updateBlogPost(id: string, input: unknown) {
@@ -254,7 +308,7 @@ export async function updateBlogPost(id: string, input: unknown) {
     throw new BlogInputError("Cet article est introuvable.");
   }
 
-  return posts[0];
+  return withEffectiveStatus(posts[0]);
 }
 
 export async function deleteBlogPost(id: string) {

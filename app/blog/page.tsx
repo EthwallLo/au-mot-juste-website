@@ -3,6 +3,7 @@ import { getArticleImageUrl } from "@/app/lib/articleImages";
 import { getPublishedBlogPosts } from "@/app/lib/blog";
 import type { BlogPostPreview } from "@/app/lib/blog";
 import { createPageMetadata } from "@/app/lib/seo";
+import { connection } from "next/server";
 
 export const metadata = createPageMetadata({
   title: "Conseils de correction et d’écriture | Au mot juste",
@@ -31,6 +32,7 @@ function getBackgroundImage(url: string) {
 }
 
 export default async function BlogPage() {
+  await connection();
   let articles: BlogPostPreview[] = [];
 
   try {

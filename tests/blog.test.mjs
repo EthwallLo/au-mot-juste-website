@@ -10,7 +10,7 @@ import { NextRequest } from "next/server.js";
 
 const require = createRequire(import.meta.url);
 
-function loadModule(file, dependencies, env = {}) {
+function loadModule(file, dependencies, env = {}, globals = {}) {
   const testModule = { exports: {} };
   const source = ts.transpileModule(readFileSync(new URL(`../${file}`, import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
@@ -23,19 +23,20 @@ function loadModule(file, dependencies, env = {}) {
     process: { env },
     Date,
     console,
+    ...globals,
   }, { filename: file });
 
   return testModule.exports;
 }
 
-function loadBlog(db, env = { DATABASE_URL: "postgresql://test:test@example.invalid/test" }) {
+function loadBlog(db, env = { DATABASE_URL: "postgresql://test:test@example.invalid/test" }, options = {}) {
   return loadModule("app/lib/blog.ts", {
     "server-only": {},
-    "next/cache": { unstable_cache: (callback) => callback },
+    "next/cache": { unstable_cache: options.cache ?? ((callback) => callback) },
     "@neondatabase/serverless": {
       neon: () => ({ query: async (statement, parameters) => (await db.query(statement, parameters)).rows }),
     },
-  }, env);
+  }, env, options.Date ? { Date: options.Date } : {});
 }
 
 const draft = {
@@ -128,6 +129,114 @@ test("publication des articles sur PostgreSQL", async (t) => {
     await db.exec("DROP TABLE public.articles");
     await assert.rejects(() => blog.getAllBlogPosts(), blog.BlogConfigError);
   });
+});
+
+test("planification des publications", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  const schema = readFileSync(new URL("../database/schema.sql", import.meta.url), "utf8");
+  for (const statement of schema.split(/^-- statement-breakpoint\s*$/m).map((part) => part.trim()).filter(Boolean)) {
+    await db.query(statement);
+  }
+
+  let now = Date.now();
+  class Clock extends Date {
+    static now() { return now; }
+    static [Symbol.hasInstance](value) { return value instanceof Date; }
+  }
+  const blog = loadBlog(db, undefined, { Date: Clock });
+  const publicationTime = now + 60 * 60 * 1000;
+  const scheduled = { ...draft, status: "scheduled", published_at: new Date(publicationTime).toISOString() };
+  let article;
+  let reads = 0;
+  const cache = (callback) => {
+    const values = new Map();
+    return (...args) => {
+      const key = JSON.stringify(args);
+      if (!values.has(key)) values.set(key, callback(...args));
+      return values.get(key);
+    };
+  };
+  const cachedBlog = loadBlog({ query: (...args) => { reads++; return db.query(...args); } }, undefined, { Date: Clock, cache });
+
+  await t.test("une planification exige une date valide dans le futur", async () => {
+    for (const published_at of ["", "pas-une-date", new Date(now - 1000).toISOString(), new Date(now).toISOString()]) {
+      await assert.rejects(() => blog.createBlogPost({ ...scheduled, published_at }), blog.BlogInputError);
+    }
+    assert.equal((await blog.getAllBlogPosts()).length, 0);
+  });
+
+  await t.test("un article planifié est privé dans la liste et à son adresse", async () => {
+    article = await blog.createBlogPost(scheduled);
+    assert.equal(article.status, "scheduled");
+    assert.equal(article.published_at, scheduled.published_at);
+    assert.equal((await cachedBlog.getPublishedBlogPosts()).length, 0);
+    assert.equal(await cachedBlog.getPublishedBlogPostBySlug(article.slug), null);
+    assert.equal((await blog.getAllBlogPosts())[0].status, "scheduled");
+    now = publicationTime - 1;
+    assert.equal((await cachedBlog.getPublishedBlogPosts()).length, 0);
+    assert.equal(await cachedBlog.getPublishedBlogPostBySlug(article.slug), null);
+  });
+
+  await t.test("l’échéance rend l’article public même avec un cache déjà rempli", async () => {
+    const previousReads = reads;
+    now = publicationTime;
+    assert.equal((await cachedBlog.getPublishedBlogPosts())[0].id, article.id);
+    assert.equal((await cachedBlog.getPublishedBlogPostBySlug(article.slug)).status, "published");
+    assert.equal(reads, previousReads, "Le passage de la date doit fonctionner sans renouveler le cache SQL.");
+    assert.equal((await blog.getAllBlogPosts())[0].status, "published");
+  });
+
+  await t.test("un statut publié avec une date future ne publie jamais en avance", async () => {
+    const post = await blog.createBlogPost({ ...scheduled, slug: "date-future", status: "published", published_at: new Date(now + 3600000).toISOString() });
+    assert.equal(post.status, "scheduled");
+    assert.equal(await blog.getPublishedBlogPostBySlug(post.slug), null);
+    assert.ok(!(await blog.getPublishedBlogPosts()).some((visible) => visible.id === post.id));
+  });
+
+  await t.test("une publication peut être reportée, annulée puis publiée immédiatement", async () => {
+    let post = await blog.createBlogPost({ ...scheduled, slug: "report-annulation", published_at: new Date(now + 3600000).toISOString() });
+    const postponedDate = new Date(now + 7200000).toISOString();
+    post = await blog.updateBlogPost(post.id, { ...scheduled, slug: post.slug, published_at: postponedDate });
+    assert.equal(post.published_at, postponedDate);
+    assert.equal(await blog.getPublishedBlogPostBySlug(post.slug), null);
+    post = await blog.updateBlogPost(post.id, { ...draft, slug: post.slug });
+    assert.equal(post.status, "draft");
+    assert.equal(post.published_at, null);
+    now += 10800000;
+    assert.equal(await blog.getPublishedBlogPostBySlug(post.slug), null);
+    post = await blog.updateBlogPost(post.id, { ...scheduled, slug: post.slug, published_at: new Date(now + 3600000).toISOString() });
+    post = await blog.updateBlogPost(post.id, { ...draft, slug: post.slug, status: "published" });
+    assert.equal(post.status, "published");
+    assert.equal(post.published_at, new Date(now).toISOString());
+    assert.equal((await blog.getPublishedBlogPostBySlug(post.slug)).id, post.id);
+  });
+});
+
+test("la migration ajoute la planification sans perdre les articles existants", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  const statements = readFileSync(new URL("../database/schema.sql", import.meta.url), "utf8")
+    .split(/^-- statement-breakpoint\s*$/m).map((part) => part.trim()).filter(Boolean);
+  for (const statement of statements.filter((statement) => !statement.startsWith("alter table"))) {
+    await db.query(statement.replace("status text not null default 'draft',", "status text not null default 'draft' check (status in ('draft', 'published')),"));
+  }
+  const blog = loadBlog(db);
+  const existing = await blog.createBlogPost(draft);
+  for (const statement of statements) await db.query(statement);
+  assert.equal((await blog.getAllBlogPosts())[0].id, existing.id);
+  assert.equal((await blog.createBlogPost({ ...draft, slug: "planifie-apres-migration", status: "scheduled", published_at: new Date(Date.now() + 86400000).toISOString() })).status, "scheduled");
+  await assert.rejects(() => db.query("INSERT INTO public.articles (title, slug, content, status) VALUES ('Sans date', 'sans-date', 'Texte', 'scheduled')"));
+});
+
+test("la planification respecte l’heure de Paris en hiver, en été et au changement d’heure", () => {
+  const dates = loadModule("app/lib/blogDates.ts", {});
+  assert.equal(dates.parisDateTimeInputToIso("2027-01-15T10:00"), "2027-01-15T09:00:00.000Z");
+  assert.equal(dates.parisDateTimeInputToIso("2027-07-15T10:00"), "2027-07-15T08:00:00.000Z");
+  assert.equal(dates.toDateTimeInput("2027-07-15T08:00:00.000Z"), "2027-07-15T10:00");
+  assert.equal(dates.parisDateTimeInputToIso("2027-03-28T02:30"), "");
+  assert.equal(dates.parisDateTimeInputToIso("2027-02-30T10:00"), "");
+  assert.equal(dates.parisDateTimeInputToIso(""), "");
 });
 
 test("les erreurs de connexion ne divulguent pas les paramètres du serveur", async () => {

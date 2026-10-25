@@ -8,6 +8,7 @@ import type { BlogPostPreview } from "./lib/blog";
 import Link from "next/link";
 import Image from "next/image";
 import { createPageMetadata } from "./lib/seo";
+import { connection } from "next/server";
 
 export const metadata = createPageMetadata({
   title: "Correction et relecture de textes | Au mot juste",
@@ -34,6 +35,7 @@ function getBackgroundImage(url: string) {
 }
 
 export default async function HomePage() {
+  await connection();
   let latestArticles: BlogPostPreview[] = [];
 
   try {

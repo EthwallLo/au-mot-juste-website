@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import BlogArticle from "@/app/components/blogArticle";
 import { getArticleImageUrl } from "@/app/lib/articleImages";
 import { getPublishedBlogPostBySlug } from "@/app/lib/blog";
@@ -14,6 +15,7 @@ type BlogArticlePageProps = {
 export async function generateMetadata({
   params,
 }: BlogArticlePageProps): Promise<Metadata> {
+  await connection();
   const { slug } = await params;
   const article = await getPublishedBlogPostBySlug(slug).catch(() => null);
 
@@ -55,6 +57,7 @@ export async function generateMetadata({
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
+  await connection();
   const { slug } = await params;
   const article = await getPublishedBlogPostBySlug(slug).catch(() => null);
 

@@ -20,6 +20,16 @@ Les identifiants d’administration restent définis par `ADMIN_USERNAME`,
 Les images acceptées sont JPEG, PNG, WebP, GIF et AVIF, jusqu’à 5 Mo. L’adresse
 renvoyée par Blob est enregistrée avec l’article lors de sa sauvegarde.
 
-Les lectures publiques excluent les brouillons. Leur cache expire après
-60 secondes et est invalidé lors d’une création, modification ou suppression
-depuis l’administration, avec l’accueil, les pages du blog et le sitemap.
+Les articles ont trois statuts : `draft`, `scheduled` et `published`. Un article
+planifié doit avoir une date de publication. Relancer `npm run db:setup` ajoute
+les contraintes nécessaires sur une base existante, sans effacer les articles.
+
+Les lectures publiques excluent les brouillons et les dates de publication
+futures. Les données mises en cache incluent les publications à venir, mais la
+date est vérifiée hors du cache à chaque visite. L’accueil, le blog, les pages
+d’articles et le sitemap sont rendus à la demande pour respecter cette échéance.
+Un article planifié dont la date est atteinte est affiché comme publié dans
+l’administration, sans tâche planifiée ni écriture automatique en base.
+
+Le cache des données expire après 60 secondes et est invalidé lors d’une
+création, modification ou suppression depuis l’administration.

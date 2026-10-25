@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import BlogArticle from "@/app/components/blogArticle";
 import { BLOG_IMAGE_EXTENSIONS, BLOG_IMAGE_MAX_SIZE } from "@/app/lib/blogImageUpload";
+import {
+  PARIS_TIME_ZONE,
+  currentParisDateTimeInput,
+  parisDateTimeInputToIso,
+  toDateTimeInput,
+} from "@/app/lib/blogDates";
 import type { BlogPost, BlogStatus } from "@/app/lib/blog";
 
 type AdminBlogManagerProps = {
@@ -33,8 +39,6 @@ const emptyForm: ArticleFormState = {
   status: "draft",
   published_at: "",
 };
-
-const PARIS_TIME_ZONE = "Europe/Paris";
 
 function slugify(input: string) {
   return input
@@ -69,69 +73,6 @@ function formatDate(value: string | null) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function getParisParts(date: Date) {
-  const parts = new Intl.DateTimeFormat("fr-FR", {
-    timeZone: PARIS_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-
-  return Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  ) as Record<string, string>;
-}
-
-function toDateTimeInput(value: string | null) {
-  if (!value) {
-    return "";
-  }
-
-  const parts = getParisParts(new Date(value));
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-}
-
-function getParisOffsetMs(date: Date) {
-  const parts = getParisParts(date);
-  const parisAsUtc = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour),
-    Number(parts.minute),
-    Number(parts.second),
-  );
-
-  return parisAsUtc - date.getTime();
-}
-
-function parisDateTimeInputToIso(value: string) {
-  const match = value.match(
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/,
-  );
-
-  if (!match) {
-    return "";
-  }
-
-  const [, year, month, day, hour, minute] = match.map(Number);
-  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
-  let utcDate = new Date(localAsUtc - getParisOffsetMs(new Date(localAsUtc)));
-
-  utcDate = new Date(localAsUtc - getParisOffsetMs(utcDate));
-  return utcDate.toISOString();
-}
-
-function currentParisDateTimeInput() {
-  return toDateTimeInput(new Date().toISOString());
 }
 
 function toFormState(article: BlogPost): ArticleFormState {
@@ -210,18 +151,31 @@ export default function AdminBlogManager({
     key: K,
     value: ArticleFormState[K],
   ) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [key]: value,
-      ...(key === "title" && !selectedId && !currentForm.slug
-        ? { slug: slugify(String(value)) }
-        : {}),
-      ...(key === "status" &&
-      value === "published" &&
-      !currentForm.published_at
-        ? { published_at: currentParisDateTimeInput() }
-        : {}),
-    }));
+    setForm((currentForm) => {
+      const nextForm = { ...currentForm, [key]: value };
+      const publicationTime = Date.parse(parisDateTimeInputToIso(currentForm.published_at));
+
+      if (key === "title" && !selectedId && !currentForm.slug) {
+        nextForm.slug = slugify(String(value));
+      }
+
+      if (key === "status") {
+        if (value === "draft") {
+          nextForm.published_at = "";
+        } else if (value === "scheduled" && !(publicationTime > Date.now())) {
+          nextForm.published_at = "";
+        } else if (value === "published" && (!Number.isFinite(publicationTime) || publicationTime > Date.now())) {
+          nextForm.published_at = currentParisDateTimeInput();
+        }
+      }
+
+      if (key === "published_at" && currentForm.status === "published" &&
+          Date.parse(parisDateTimeInputToIso(String(value))) > Date.now()) {
+        nextForm.status = "scheduled";
+      }
+
+      return nextForm;
+    });
   }
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -262,43 +216,56 @@ export default function AdminBlogManager({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsSaving(true);
-    setMessage("");
+    const payload = serializeForm(form);
 
-    const response = await fetch(
-      selectedId ? `/api/admin/articles/${selectedId}` : "/api/admin/articles",
-      {
-        method: selectedId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(serializeForm(form)),
-      },
-    );
-    const data = (await response.json().catch(() => ({}))) as {
-      article?: BlogPost;
-      message?: string;
-    };
-
-    setIsSaving(false);
-
-    if (!response.ok || !data.article) {
-      setMessage(data.message ?? "Enregistrement impossible.");
+    if (form.status !== "draft" && form.published_at && !payload.published_at) {
+      setMessage("Enregistrement impossible : cette date ou cette heure n’existe pas à Paris. Choisissez une autre heure.");
       return;
     }
 
-    const savedArticle = data.article;
+    setIsSaving(true);
+    setMessage("");
 
-    setPosts((currentPosts) => {
-      if (selectedId) {
-        return currentPosts.map((post) =>
-          post.id === savedArticle.id ? savedArticle : post,
-        );
+    try {
+      const response = await fetch(
+        selectedId ? `/api/admin/articles/${selectedId}` : "/api/admin/articles",
+        {
+          method: selectedId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        article?: BlogPost;
+        message?: string;
+      };
+
+      if (!response.ok || !data.article) {
+        setMessage(`Enregistrement impossible. ${data.message ?? "Veuillez réessayer."}`);
+        return;
       }
 
-      return [savedArticle, ...currentPosts];
-    });
-    setSelectedId(savedArticle.id);
-    setForm(toFormState(savedArticle));
-    setMessage("Article enregistré.");
+      const savedArticle = data.article;
+
+      setPosts((currentPosts) => {
+        if (selectedId) {
+          return currentPosts.map((post) =>
+            post.id === savedArticle.id ? savedArticle : post,
+          );
+        }
+
+        return [savedArticle, ...currentPosts];
+      });
+      setSelectedId(savedArticle.id);
+      setForm(toFormState(savedArticle));
+      setMessage(savedArticle.status === "scheduled"
+        ? `Publication planifiée pour le ${formatDate(savedArticle.published_at)} (heure de Paris).`
+        : "Article enregistré.");
+    } catch {
+      setMessage("Enregistrement impossible. Vérifiez votre connexion et réessayez.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -400,12 +367,14 @@ export default function AdminBlogManager({
                         className={`rounded-full px-2 py-1 ${
                           post.status === "published"
                             ? "bg-green-50 text-green-700"
+                            : post.status === "scheduled"
+                            ? "bg-blue-50 text-blue-700"
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {post.status === "published" ? "Publié" : "Brouillon"}
+                        {post.status === "published" ? "Publié" : post.status === "scheduled" ? "Planifié" : "Brouillon"}
                       </span>
-                      {formatDate(post.published_at)}
+                      {post.status === "scheduled" ? "Prévu le " : ""}{formatDate(post.published_at)}
                     </span>
                   </button>
                 ))
@@ -481,6 +450,7 @@ export default function AdminBlogManager({
                   className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#B76E79] focus:bg-white"
                 >
                   <option value="draft">Brouillon</option>
+                  <option value="scheduled">Planifié</option>
                   <option value="published">Publié</option>
                 </select>
               </div>
@@ -496,11 +466,21 @@ export default function AdminBlogManager({
                   id="published_at"
                   type="datetime-local"
                   value={form.published_at}
+                  required={form.status === "scheduled"}
+                  disabled={form.status === "draft"}
+                  min={form.status === "scheduled" ? currentParisDateTimeInput() : undefined}
+                  aria-describedby={form.status === "scheduled" ? "publication-help" : undefined}
                   onChange={(event) =>
                     updateForm("published_at", event.target.value)
                   }
-                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#B76E79] focus:bg-white"
+                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#B76E79] focus:bg-white disabled:opacity-50"
                 />
+                {form.status === "scheduled" ? (
+                  <p id="publication-help" className="mt-2 text-sm leading-6 text-gray-600">
+                    L’article sera publié automatiquement à cette date, même si cette page est fermée.
+                    Pour annuler, repassez en brouillon et enregistrez.
+                  </p>
+                ) : null}
               </div>
 
               <div>
@@ -642,7 +622,7 @@ export default function AdminBlogManager({
                   disabled={isSaving}
                   className="rounded-md bg-brand-strong px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-70"
                 >
-                  {isSaving ? "Enregistrement..." : "Enregistrer"}
+                  {isSaving ? "Enregistrement..." : form.status === "scheduled" ? "Planifier la publication" : "Enregistrer"}
                 </button>
               </div>
             </div>
