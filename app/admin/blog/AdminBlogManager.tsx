@@ -1,8 +1,9 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
+import BlogArticle from "@/app/components/blogArticle";
 import { BLOG_IMAGE_EXTENSIONS, BLOG_IMAGE_MAX_SIZE } from "@/app/lib/blogImageUpload";
 import type { BlogPost, BlogStatus } from "@/app/lib/blog";
 
@@ -176,6 +177,22 @@ export default function AdminBlogManager({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
+
+  function openPreview() {
+    setIsPreviewOpen(true);
+    previewDialogRef.current?.showModal();
+
+    if (previewDialogRef.current) {
+      previewDialogRef.current.scrollTop = 0;
+    }
+  }
+
+  function closePreview() {
+    previewDialogRef.current?.close();
+    setIsPreviewOpen(false);
+  }
 
   function selectPost(article: BlogPost) {
     setSelectedId(article.id);
@@ -397,6 +414,22 @@ export default function AdminBlogManager({
           </aside>
 
           <form onSubmit={handleSubmit} className="rounded-md bg-white p-5 shadow-sm sm:p-8">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {selectedId ? "Modifier l’article" : "Nouvel article"}
+              </h2>
+              <button
+                type="button"
+                onClick={openPreview}
+                disabled={isSaving || isDeleting || isUploadingImage}
+                aria-haspopup="dialog"
+                aria-controls="article-preview"
+                className="rounded-md border border-[#B76E79] px-4 py-2.5 text-sm font-semibold text-brand-strong transition hover:bg-[#fff8f9] disabled:cursor-wait disabled:opacity-50"
+              >
+                Prévisualiser
+              </button>
+            </div>
+
             <div className="grid gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label
@@ -593,17 +626,78 @@ export default function AdminBlogManager({
                 {isDeleting ? "Suppression..." : "Supprimer"}
               </button>
 
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="rounded-md bg-brand-strong px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-70"
-              >
-                {isSaving ? "Enregistrement..." : "Enregistrer"}
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={openPreview}
+                  disabled={isSaving || isDeleting || isUploadingImage}
+                  aria-haspopup="dialog"
+                  aria-controls="article-preview"
+                  className="rounded-md border border-[#B76E79] px-4 py-2.5 text-sm font-semibold text-brand-strong transition hover:bg-[#fff8f9] disabled:cursor-wait disabled:opacity-50"
+                >
+                  Prévisualiser
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-md bg-brand-strong px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-70"
+                >
+                  {isSaving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       </div>
+
+      <dialog
+        ref={previewDialogRef}
+        id="article-preview"
+        aria-labelledby="article-preview-title"
+        aria-describedby="article-preview-description"
+        onClose={() => {
+          if (!previewDialogRef.current?.open) {
+            setIsPreviewOpen(false);
+          }
+        }}
+        className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-y-auto overscroll-contain border-0 bg-white p-0 text-gray-900 backdrop:bg-black/40"
+      >
+        <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-4 sm:px-6">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="article-preview-title" className="text-lg font-semibold">
+                Prévisualisation de l’article
+              </h2>
+              <p id="article-preview-description" className="mt-1 text-sm text-gray-600">
+                Aperçu privé des modifications en cours. Rien n’est enregistré ni publié.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={closePreview}
+              className="rounded-md bg-brand-strong px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover"
+            >
+              Revenir à la rédaction
+            </button>
+          </div>
+        </div>
+
+        {isPreviewOpen ? (
+          <BlogArticle
+            article={{
+              title: form.title.trim() || "Titre de l’article",
+              excerpt: form.excerpt.trim() || null,
+              content: form.content.trim() || "Le texte de votre article apparaîtra ici.",
+              cover_image_source: form.cover_image_source.trim() || null,
+              published_at: form.published_at
+                ? parisDateTimeInputToIso(form.published_at) || null
+                : null,
+            }}
+            headerImage={form.cover_image_url.trim() || "/optimized/image-carnet-2.avif"}
+            onBack={closePreview}
+          />
+        ) : null}
+      </dialog>
     </div>
   );
 }

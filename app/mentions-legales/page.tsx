@@ -153,7 +153,7 @@ export default function MentionsLegalesPage() {
               </p>
 
               <p className="text-sm text-gray-500">
-                Dernière mise à jour : 10 janvier 2026
+                Dernière mise à jour : 25 octobre 2026
               </p>
             </div>
           </div>

@@ -18,6 +18,8 @@ ou de prendre contact.
 - Blog public alimenté par Neon PostgreSQL, avec articles publiés, image de couverture,
   résumé et page détail.
 - Interface d'administration du blog sur `/admin/blog`, protégée par session.
+- Prévisualisation privée des articles avant enregistrement ou publication, avec
+  la même mise en page que le blog public.
 - Upload direct d’images d’articles vers Vercel Blob.
 - Formulaire de contact avec envoi d'e-mail via Nodemailer.
 - Pages légales, navigation responsive, liens d'accessibilité, SEO, Open Graph,
