@@ -2,6 +2,8 @@
 
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
+import { BLOG_IMAGE_EXTENSIONS, BLOG_IMAGE_MAX_SIZE } from "@/app/lib/blogImageUpload";
 import type { BlogPost, BlogStatus } from "@/app/lib/blog";
 
 type AdminBlogManagerProps = {
@@ -206,37 +208,39 @@ export default function AdminBlogManager({
   }
 
   async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
 
     if (!file) {
+      return;
+    }
+
+    const extension = BLOG_IMAGE_EXTENSIONS[file.type];
+
+    if (!extension || file.size === 0 || file.size > BLOG_IMAGE_MAX_SIZE) {
+      setMessage("Choisissez une image JPEG, PNG, WebP, GIF ou AVIF de 5 Mo maximum.");
+      input.value = "";
       return;
     }
 
     setIsUploadingImage(true);
     setMessage("");
 
-    const formData = new FormData();
-    formData.append("image", file);
+    try {
+      const blob = await upload(`articles/${crypto.randomUUID()}.${extension}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/images",
+        contentType: file.type,
+      });
 
-    const response = await fetch("/api/admin/images", {
-      method: "POST",
-      body: formData,
-    });
-    const data = (await response.json().catch(() => ({}))) as {
-      url?: string;
-      message?: string;
-    };
-
-    setIsUploadingImage(false);
-    event.target.value = "";
-
-    if (!response.ok || !data.url) {
-      setMessage(data.message ?? "Upload de l'image impossible.");
-      return;
+      updateForm("cover_image_url", blob.url);
+      setMessage("Image ajoutée.");
+    } catch {
+      setMessage("Impossible d’ajouter l’image. Vérifiez votre connexion et la configuration Vercel Blob.");
+    } finally {
+      setIsUploadingImage(false);
+      input.value = "";
     }
-
-    updateForm("cover_image_url", data.url);
-    setMessage("Image ajoutée.");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -319,7 +323,7 @@ export default function AdminBlogManager({
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#B76E79]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-strong">
               Blog
             </p>
             <h1 className="mt-2 text-3xl font-bold text-gray-900">
@@ -329,7 +333,7 @@ export default function AdminBlogManager({
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#B76E79] hover:text-[#B76E79]"
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#B76E79] hover:text-brand-strong"
           >
             Se déconnecter
           </button>
@@ -483,11 +487,11 @@ export default function AdminBlogManager({
                   className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-[#B76E79] focus:bg-white"
                 />
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <label className="inline-flex w-fit rounded-md border border-[#B76E79] px-4 py-2 text-sm font-semibold text-[#B76E79] transition hover:bg-[#fff8f9]">
+                  <label className="inline-flex w-fit rounded-md border border-[#B76E79] px-4 py-2 text-sm font-semibold text-brand-strong transition hover:bg-[#fff8f9]">
                     {isUploadingImage ? "Upload..." : "Uploader une image"}
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      accept={Object.keys(BLOG_IMAGE_EXTENSIONS).join(",")}
                       onChange={handleImageUpload}
                       disabled={isUploadingImage}
                       className="sr-only"
@@ -505,6 +509,9 @@ export default function AdminBlogManager({
                     />
                   ) : null}
                 </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  JPEG, PNG, WebP, GIF ou AVIF · 5 Mo maximum.
+                </p>
               </div>
 
               <div>
@@ -589,7 +596,7 @@ export default function AdminBlogManager({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-md bg-[#B76E79] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#a4626c] disabled:cursor-wait disabled:opacity-70"
+                className="rounded-md bg-brand-strong px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-70"
               >
                 {isSaving ? "Enregistrement..." : "Enregistrer"}
               </button>

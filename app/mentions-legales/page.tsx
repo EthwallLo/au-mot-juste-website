@@ -1,3 +1,12 @@
+import { createPageMetadata } from "../lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Mentions légales | Au mot juste",
+  description:
+    "Informations sur l’édition, l’hébergement et les crédits du site Au mot juste, dédié à la correction, à la relecture et à la traduction anglais-français.",
+  path: "/mentions-legales",
+});
+
 export default function MentionsLegalesPage() {
   return (
     <div className="w-full min-h-screen flex flex-col">
@@ -5,7 +14,7 @@ export default function MentionsLegalesPage() {
         aria-labelledby="mentions-legales-titre"
         className="relative w-full h-[45vh] flex justify-center items-center"
         style={{
-          backgroundImage: "url('/image-carnet.webp')",
+          backgroundImage: "url('/optimized/image-carnet.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -36,7 +45,7 @@ export default function MentionsLegalesPage() {
                 réalisation et de son suivi.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 1. Éditrice du site
               </h2>
               <p>Le présent site est édité par :
@@ -48,11 +57,11 @@ export default function MentionsLegalesPage() {
                 Email : lorena.correction@gmail.com
               </p>
               <p>
-                SIREN : <strong>999 377 864</strong> / SIRET : <strong>999 377 864 00015</strong>
+                SIREN : <strong>999 377 864</strong> / SIRET : <strong>999 377 864 00023</strong>
                 <br />
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 2. Hébergement
               </h2>
               <p>Le site est hébergé par :
@@ -60,7 +69,7 @@ export default function MentionsLegalesPage() {
                 <strong>Vercel Inc.</strong> 340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 3. Propriété intellectuelle
               </h2>
               <p>
@@ -72,7 +81,7 @@ export default function MentionsLegalesPage() {
                 sans autorisation écrite préalable.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 4. Responsabilité
               </h2>
               <p>
@@ -86,7 +95,7 @@ export default function MentionsLegalesPage() {
                 indirects résultant de l’accès ou de l’utilisation du site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 5. Liens hypertextes
               </h2>
               <p>
@@ -95,7 +104,7 @@ export default function MentionsLegalesPage() {
                 responsabilité à ce titre.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 6. Données personnelles
               </h2>
               <p>
@@ -103,7 +112,7 @@ export default function MentionsLegalesPage() {
                 de{" "}
                 <a
                   href="https://aumotjuste-correction.fr/confidentialite"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   rel="noopener noreferrer"
                 >
                   Politique de confidentialité
@@ -111,19 +120,19 @@ export default function MentionsLegalesPage() {
                 , accessible depuis le site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 7. Droit applicable
               </h2>
               <p>
                 Le présent site est soumis au <strong>droit français</strong>.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">8. Crédits</h2>
+              <h2 className="text-2xl font-bold text-brand-strong">8. Crédits</h2>
               <p>
                 Les images et photographies présentes sur ce site proviennent de{" "}
                 <a
                   href="https://unsplash.com/fr"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -135,7 +144,7 @@ export default function MentionsLegalesPage() {
                 Les icônes utilisées sur ce site proviennent de la plateforme{" "}
                 <a
                   href="https://www.svgrepo.com"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateBlog } from "@/app/lib/revalidateBlog";
 import { isAdminRequestAuthenticated } from "@/app/lib/adminSession";
 import {
   BlogConfigError,
@@ -52,8 +52,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const article = await createBlogPost(await request.json());
-    revalidatePath("/blog");
-    revalidatePath(`/blog/${article.slug}`);
+    revalidateBlog();
     return NextResponse.json({ article }, { status: 201 });
   } catch (error) {
     return apiError(error);

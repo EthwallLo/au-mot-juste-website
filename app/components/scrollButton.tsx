@@ -23,7 +23,7 @@ export default function ScrollButton() {
       type="button"
       aria-label="Aller à la section Pourquoi faire appel à une correctrice-relectrice"
       onClick={handleScroll}
-      className="mt-6 px-6 py-3 bg-gray-50 text-gray-800 rounded-md font-medium hover:scale-105 transition transform"
+      className="px-6 py-3 bg-gray-50 text-gray-800 rounded-md font-medium hover:scale-105 transition transform"
     >
       Découvrir ↓
     </button>

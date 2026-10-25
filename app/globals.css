@@ -23,11 +23,15 @@ html[data-text-size="large"] {
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --brand-strong: #94505D;
+  --brand-hover: #7F3F4D;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-hover: var(--brand-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-cutive: "Cutive";
@@ -63,7 +67,7 @@ button, a {
   transform: translateY(-200%);
   border-radius: 9999px;
   background: #ffffff;
-  color: #B76E79;
+  color: var(--brand-strong);
   padding: 0.75rem 1rem;
   font-weight: 600;
   box-shadow: 0 10px 30px rgba(183, 110, 121, 0.16);

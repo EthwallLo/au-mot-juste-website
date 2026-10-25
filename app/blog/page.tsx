@@ -1,17 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { getArticleImageUrl } from "@/app/lib/articleImages";
 import { getPublishedBlogPosts } from "@/app/lib/blog";
 import type { BlogPostPreview } from "@/app/lib/blog";
+import { createPageMetadata } from "@/app/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Blog | Au mot juste",
+export const metadata = createPageMetadata({
+  title: "Conseils de correction et d’écriture | Au mot juste",
   description:
     "Conseils de correction, relecture, écriture et clarté rédactionnelle par Au mot juste.",
-  alternates: {
-    canonical: "https://aumotjuste-correction.fr/blog",
-  },
-};
+  path: "/blog",
+});
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -46,9 +44,9 @@ export default async function BlogPage() {
   const featuredImage = featuredArticle
     ? await getArticleImageUrl(
         featuredArticle.cover_image_url,
-        "/image-carnet.webp",
+        "/optimized/image-carnet.avif",
       )
-    : "/image-carnet.webp";
+    : "/optimized/image-carnet.avif";
   const otherArticleImages = new Map(
     await Promise.all(
       otherArticles.map(async (article) => [
@@ -63,7 +61,7 @@ export default async function BlogPage() {
       <section
         aria-labelledby="blog-titre"
         className="relative flex min-h-[420px] items-end overflow-hidden bg-cover bg-center pb-14 pt-32"
-        style={{ backgroundImage: "url('/image-carnet-2.webp')" }}
+        style={{ backgroundImage: "url('/optimized/image-carnet-2.avif')" }}
       >
         <div aria-hidden="true" className="absolute inset-0 bg-white/55" />
         <div
@@ -73,7 +71,7 @@ export default async function BlogPage() {
 
         <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-8 px-6 md:grid-cols-[0.85fr_1.15fr] md:items-end md:px-12">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#B76E79]">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-strong">
               Carnet de correction
             </p>
             <h1
@@ -104,7 +102,7 @@ export default async function BlogPage() {
                   }}
                 >
                   <div aria-hidden="true" className="absolute inset-0 bg-[#B76E79]/20" />
-                  <div className="absolute bottom-5 left-5 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-[#B76E79] shadow-sm">
+                  <div className="absolute bottom-5 left-5 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-brand-strong shadow-sm">
                     À la une
                   </div>
                   {featuredArticle.cover_image_source ? (
@@ -118,7 +116,7 @@ export default async function BlogPage() {
                   {formatDate(featuredArticle.published_at) ? (
                     <time
                       dateTime={featuredArticle.published_at ?? undefined}
-                      className="text-sm font-semibold uppercase tracking-[0.16em] text-[#B76E79]"
+                      className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-strong"
                     >
                       {formatDate(featuredArticle.published_at)}
                     </time>
@@ -126,7 +124,7 @@ export default async function BlogPage() {
                   <h2 className="mt-4 text-3xl font-bold leading-tight text-gray-900 md:text-4xl">
                     <Link
                       href={`/blog/${featuredArticle.slug}`}
-                      className="rounded-sm hover:text-[#B76E79]"
+                      className="rounded-sm hover:text-brand-strong"
                     >
                       {featuredArticle.title}
                     </Link>
@@ -138,7 +136,7 @@ export default async function BlogPage() {
                   ) : null}
                   <Link
                     href={`/blog/${featuredArticle.slug}`}
-                    className="mt-8 inline-flex w-fit rounded-md bg-[#B76E79] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#a4626c]"
+                    className="mt-8 inline-flex w-fit rounded-md bg-brand-strong px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-hover"
                   >
                     Lire l’article
                   </Link>
@@ -184,12 +182,12 @@ export default async function BlogPage() {
                             {date ? (
                               <time
                                 dateTime={article.published_at ?? undefined}
-                                className="text-sm font-medium text-[#B76E79]"
+                                className="text-sm font-medium text-brand-strong"
                               >
                                 {date}
                               </time>
                             ) : null}
-                            <h3 className="mt-3 text-xl font-semibold leading-snug text-gray-900 transition group-hover:text-[#B76E79]">
+                            <h3 className="mt-3 text-xl font-semibold leading-snug text-gray-900 transition group-hover:text-brand-strong">
                               {article.title}
                             </h3>
                             {article.excerpt ? (

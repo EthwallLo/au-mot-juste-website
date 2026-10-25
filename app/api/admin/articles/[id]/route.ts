@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateBlog } from "@/app/lib/revalidateBlog";
 import { isAdminRequestAuthenticated } from "@/app/lib/adminSession";
 import {
   BlogConfigError,
@@ -46,8 +46,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const article = await updateBlogPost(id, await request.json());
-    revalidatePath("/blog");
-    revalidatePath(`/blog/${article.slug}`);
+    revalidateBlog();
     return NextResponse.json({ article });
   } catch (error) {
     return apiError(error);
@@ -62,7 +61,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     await deleteBlogPost(id);
-    revalidatePath("/blog");
+    revalidateBlog();
     return NextResponse.json({ message: "Article supprimé." });
   } catch (error) {
     return apiError(error);

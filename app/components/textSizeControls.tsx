@@ -78,8 +78,8 @@ export default function TextSizeControls() {
               onClick={() => handleChange(size.id)}
               className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-semibold transition sm:h-10 sm:min-w-10 ${
                 isActive
-                  ? "bg-[#B76E79] text-white shadow-sm"
-                  : "text-[#B76E79] hover:bg-[#f6ecee]"
+                  ? "bg-brand-strong text-white shadow-sm"
+                  : "text-brand-strong hover:bg-[#f6ecee]"
               }`}
             >
               {size.label}

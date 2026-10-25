@@ -1,5 +1,4 @@
-"use client";
-
+import { createPageMetadata } from "../lib/seo";
 import {
   Card,
   CardContent,
@@ -7,6 +6,13 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/card";
+
+export const metadata = createPageMetadata({
+  title: "Lorena Guedouani, correctrice-relectrice | Au mot juste",
+  description:
+    "Découvrez le parcours de Lorena Guedouani, correctrice-relectrice freelance : formations en linguistique, certifications et expériences en rédaction.",
+  path: "/qui-suis-je",
+});
 
 const experiences = [
   {
@@ -121,7 +127,7 @@ export default function QuiSuisJePage() {
         aria-labelledby="qui-suis-je-titre"
         className="relative w-full h-[45vh] flex justify-center items-center"
         style={{
-          backgroundImage: "url('/image-pc.webp')",
+          backgroundImage: "url('/optimized/image-pc.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -137,10 +143,10 @@ export default function QuiSuisJePage() {
         </div>
       </section>
 
-      <section id="a-propos" aria-labelledby="a-propos-lorena" className="relative bg-white min-h-[50vh] pt-40">
+      <section id="a-propos" aria-labelledby="a-propos-lorena" className="relative bg-white min-h-[50vh] pt-12 md:pt-40">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 px-6">
           <div className="md:w-1/2">
-            <h2 id="a-propos-lorena" className="text-3xl font-bold mb-10 text-[#B76E79] relative after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3">
+            <h2 id="a-propos-lorena" className="text-3xl font-bold mb-10 text-brand-strong relative after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3">
               Moi, c&apos;est Lorena
             </h2>
             <p className="text-gray-700 mb-6">
@@ -154,14 +160,14 @@ export default function QuiSuisJePage() {
             </p>
           </div>
           <div className="md:w-1/2 flex justify-center">
-            <img src="/lorena-moi.png" alt="Portrait de Lorena Guedouani" className="w-[500px]" />
+            <img src="/optimized/lorena-moi.webp" alt="Portrait de Lorena Guedouani" width={800} height={800} loading="lazy" className="w-[500px] h-auto" />
           </div>
         </div>
       </section>
 
       <section id="formations" aria-labelledby="formations-titre" className="bg-white py-12">
         <div className="max-w-5xl mx-auto px-6 space-y-6">
-          <h2 id="formations-titre" className="text-2xl font-bold text-[#B76E79] mb-8 text-center">
+          <h2 id="formations-titre" className="text-2xl font-bold text-brand-strong mb-8 text-center">
             Formations
           </h2>
           {formations.map((item, i) => (
@@ -179,7 +185,7 @@ export default function QuiSuisJePage() {
                       <CardTitle className="text-gray-800 text-lg">
                         {item.title}
                       </CardTitle>
-                      <CardDescription className="text-[#B76E79] font-medium">
+                      <CardDescription className="text-brand-strong font-medium">
                         {item.institution}
                       </CardDescription>
                     </div>
@@ -196,7 +202,7 @@ export default function QuiSuisJePage() {
 
       <section id="experiences" aria-labelledby="experiences-titre" className="bg-white py-12">
         <div className="max-w-6xl mx-auto px-6 space-y-6">
-          <h2 id="experiences-titre" className="text-2xl font-bold text-[#B76E79] mb-8 text-center">
+          <h2 id="experiences-titre" className="text-2xl font-bold text-brand-strong mb-8 text-center">
             Expériences
           </h2>
           {experiences.map((exp, i) => (
@@ -210,7 +216,7 @@ export default function QuiSuisJePage() {
                     <CardTitle className="text-lg text-gray-800 mb-2">
                       {exp.title}
                     </CardTitle>
-                    <CardDescription className="text-[#B76E79] font-medium mb-2">
+                    <CardDescription className="text-brand-strong font-medium mb-2">
                       {exp.company}
                     </CardDescription>
                   </div>
@@ -225,7 +231,7 @@ export default function QuiSuisJePage() {
                       <span className="sr-only">Lieu : </span>
                       {exp.location}
                     </div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#B76E79]/10 text-[#B76E79] border border-[#B76E79]/20">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#B76E79]/10 text-brand-strong border border-[#B76E79]/20">
                       {exp.type}
                     </span>
                   </div>
@@ -243,8 +249,8 @@ export default function QuiSuisJePage() {
 
       <section id="diplomes" aria-labelledby="diplomes-titre" className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 id="diplomes-titre" className="text-2xl font-bold text-[#B76E79] mb-8 text-center">
-            Diplômes & Certifications
+          <h2 id="diplomes-titre" className="text-2xl font-bold text-brand-strong mb-8 text-center">
+            Certifications
           </h2>
 
           <Card className="group card-hover">
@@ -253,9 +259,9 @@ export default function QuiSuisJePage() {
                 {diplomes.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-[#B76E79]/50 transition-all duration-300 hover:bg-[#B76E79]/5"
+                    className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-[#B76E79]/50 transition-all duration-300 hover:bg-brand-strong/5"
                   >
-                    <div className="w-2 h-2 bg-[#B76E79] rounded-full mr-3 shrink-0" />
+                    <div className="w-2 h-2 bg-brand-strong rounded-full mr-3 shrink-0" />
 
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -270,7 +276,7 @@ export default function QuiSuisJePage() {
                         <span className="text-sm text-gray-800 font-semibold">
                           {item.title}
                           {item.period && (
-                            <span className="text-xs text-gray-400 ml-2">
+                            <span className="text-xs text-gray-600 ml-2">
                               ({item.period})
                             </span>
                           )}

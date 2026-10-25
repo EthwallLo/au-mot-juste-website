@@ -1,4 +1,13 @@
 import Image from "next/image";
+import ServiceProcess from "../components/serviceProcess";
+import { createPageMetadata } from "../lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Traduction anglais-français | Au mot juste",
+  description:
+    "Traduction de l’anglais vers le français et relecture de traductions : manuscrits, contenus web et documents professionnels. Tarifs et devis gratuit.",
+  path: "/traduction",
+});
 
 export default function TraductionPage() {
   return (
@@ -8,7 +17,7 @@ export default function TraductionPage() {
         aria-labelledby="traduction-titre"
         className="relative w-full h-[45vh] flex justify-center items-center"
         style={{
-          backgroundImage: "url('/image-carnet-2.webp')",
+          backgroundImage: "url('/optimized/image-carnet-2.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -38,7 +47,7 @@ export default function TraductionPage() {
         <section className="py-20 bg-cover bg-center">
           <h2
             id="types-traduction"
-            className="text-center text-3xl font-bold text-[#B76E79] mb-16 after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
+            className="text-center text-3xl font-bold text-brand-strong mb-16 after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
           >
             Quels types de documents ?
           </h2>
@@ -52,7 +61,7 @@ export default function TraductionPage() {
                 width={80}
                 height={80}
               />
-              <h3 className="text-xl font-semibold mb-3 text-[#B76E79]">
+              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
                 Contenus web
               </h3>
               <p className="text-gray-700 leading-relaxed">
@@ -69,7 +78,7 @@ export default function TraductionPage() {
                 width={80}
                 height={80}
               />
-              <h3 className="text-xl font-semibold mb-3 text-[#B76E79]">
+              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
                 Manuscrits
               </h3>
               <p className="text-gray-700 leading-relaxed">
@@ -86,7 +95,7 @@ export default function TraductionPage() {
                 width={80}
                 height={80}
               />
-              <h3 className="text-xl font-semibold mb-3 text-[#B76E79]">
+              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
                 Travaux universitaires
               </h3>
               <p className="text-gray-700 leading-relaxed">
@@ -103,7 +112,7 @@ export default function TraductionPage() {
                 width={80}
                 height={80}
               />
-              <h3 className="text-xl font-semibold mb-3 text-[#B76E79]">
+              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
                 Documents personnels
               </h3>
               <p className="text-gray-700 leading-relaxed">
@@ -119,7 +128,7 @@ export default function TraductionPage() {
         id="tarifs"
         aria-labelledby="tarifs-titre"
         className="relative justify-center items-center bg-white"
-        style={{ backgroundImage: "url('/librairie.webp')" }}
+        style={{ backgroundImage: "url('/optimized/librairie.avif')" }}
       >
         <section className="py-20 bg-cover bg-center">
           <h2
@@ -128,9 +137,9 @@ export default function TraductionPage() {
           >
             Les tarifs
           </h2>
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 px-6 mb-24">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 px-6 mb-8">
             <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition text-center">
-              <h3 className="text-2xl font-bold mb-4 text-[#B76E79]">
+              <h3 className="text-2xl font-bold mb-4 text-brand-strong">
                 Traduction anglais-français
               </h3>
               <p className="leading-relaxed text-gray-600">
@@ -140,11 +149,11 @@ export default function TraductionPage() {
               </p>
 
               <p className="mt-4 font-semibold text-gray-700">
-                <span className="text-[#B76E79] font-bold">0,10 €</span> / mot source
+                <span className="text-brand-strong font-bold">0,10 €</span> / mot source
               </p>
             </div>
             <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition text-center">
-              <h3 className="text-2xl font-bold mb-4 text-[#B76E79]">
+              <h3 className="text-2xl font-bold mb-4 text-brand-strong">
                 Relecture après traduction
               </h3>
               <p className="leading-relaxed text-gray-600">
@@ -154,14 +163,33 @@ export default function TraductionPage() {
               </p>
 
               <p className="mt-4 font-semibold text-gray-700">
-                <span className="text-[#B76E79] font-bold">0,04 €</span> / mot source
+                <span className="text-brand-strong font-bold">0,04 €</span> / mot source
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto max-w-5xl px-6">
+            <div className="rounded-2xl bg-white/95 p-6 sm:p-8">
+              <h3 className="mb-3 text-lg font-semibold text-gray-800">Comment est calculé le tarif ?</h3>
+              <p className="leading-relaxed text-gray-600">
+                Le mot source correspond à un mot du document d’origine en
+                anglais. Pour un texte de 1 000 mots en anglais, comptez
+                environ <strong>100 € pour une traduction</strong> ou{" "}
+                <strong>40 € pour la relecture d’une traduction existante</strong>.
+              </p>
+              <p className="mt-4 leading-relaxed text-gray-600">
+                Ces tarifs sont indicatifs. Le montant final et le délai sont
+                confirmés dans un devis gratuit après examen de votre document
+                ou d’un extrait. Pour une relecture, transmettez aussi le texte
+                anglais afin de permettre la comparaison avec la traduction.
+                Les éventuelles conditions de facturation pour un texte court
+                ou une demande particulière sont précisées dans le devis.
               </p>
             </div>
           </div>
           <div className="text-center mt-20">
             <a
               href="/contact"
-              className="px-8 py-4 bg-[#B76E79] text-white text-lg font-semibold rounded-md shadow-md hover:bg-[#a4626c] transition"
+              className="px-8 py-4 bg-brand-strong text-white text-lg font-semibold rounded-md shadow-md hover:bg-brand-hover transition"
             >
               Demander un devis gratuit
             </a>
@@ -171,6 +199,7 @@ export default function TraductionPage() {
           Photo : Susan Q Yin / Unsplash
         </div>
       </section>
+      <ServiceProcess service="traduction" />
     </div>
   );
 }

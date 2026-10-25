@@ -22,7 +22,7 @@ export default async function AdminBlogPage() {
     return (
       <div
         className="flex min-h-screen items-center justify-center bg-cover bg-center px-4 py-28"
-        style={{ backgroundImage: "url('/image-carnet.webp')" }}
+        style={{ backgroundImage: "url('/optimized/image-carnet.avif')" }}
       >
         <div aria-hidden="true" className="absolute inset-0 bg-white/55" />
         <div className="relative z-10 w-full">

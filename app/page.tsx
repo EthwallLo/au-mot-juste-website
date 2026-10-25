@@ -7,6 +7,14 @@ import { getPublishedBlogPosts } from "./lib/blog";
 import type { BlogPostPreview } from "./lib/blog";
 import Link from "next/link";
 import Image from "next/image";
+import { createPageMetadata } from "./lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Correction et relecture de textes | Au mot juste",
+  description:
+    "Lorena Guedouani, correctrice-relectrice freelance : correction de manuscrits, documents professionnels et contenus web. Demandez un devis gratuit.",
+  path: "/",
+});
 
 function formatArticleDate(value: string | null) {
   if (!value) {
@@ -38,7 +46,7 @@ export default async function HomePage() {
     await Promise.all(
       latestArticles.map(async (article) => [
         article.id,
-        await getArticleImageUrl(article.cover_image_url, "/image-carnet.webp"),
+        await getArticleImageUrl(article.cover_image_url, "/optimized/image-carnet.avif"),
       ] as const),
     ),
   );
@@ -63,7 +71,7 @@ export default async function HomePage() {
       <section
         aria-labelledby="accueil-hero"
         className="w-full relative min-h-screen md:min-h-screen flex justify-center items-center bg-cover bg-center"
-        style={{ backgroundImage: "url('/image-carnet.webp')" }}
+        style={{ backgroundImage: "url('/optimized/image-carnet.avif')" }}
       >
         <div aria-hidden="true" className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 flex flex-col justify-center items-center h-full text-center px-6 md:px-12">
@@ -74,7 +82,15 @@ export default async function HomePage() {
           <p className="text-md md:text-lg max-w-2xl mx-auto text-gray-600">
             Je vous accompagne dans la correction de vos écrits.
           </p>
-          <ScrollButton />
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <ScrollButton />
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center rounded-md bg-brand-strong px-6 py-3 font-medium text-white transition hover:bg-brand-hover"
+            >
+              Demander un devis gratuit
+            </Link>
+          </div>
         </div>
         <div className="absolute left-2 top-1/2 -translate-y-1/2 bg-gray-200/50 text-gray-700 text-[10px] italic px-1 py-0.5 rounded rotate-90 origin-left">
           Photo : Jess Bailey / Unsplash
@@ -89,7 +105,7 @@ export default async function HomePage() {
       >
         <h2
           id="pourquoi-correctrice"
-          className="text-2xl sm:text-3xl font-bold mb-10 text-[#B76E79] relative text-center
+          className="text-2xl sm:text-3xl font-bold mb-10 text-brand-strong relative text-center
           after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
         >
           Pourquoi faire appel à une correctrice-relectrice ?
@@ -136,7 +152,7 @@ export default async function HomePage() {
         aria-labelledby="a-propos-titre"
         className="relative bg-gray-100"
         style={{
-          backgroundImage: "url('/image-bureau.webp')",
+          backgroundImage: "url('/optimized/image-bureau.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           minHeight: "80vh",
@@ -152,7 +168,7 @@ export default async function HomePage() {
               Je m&apos;appelle Lorena et je suis passionnée de linguistique.{" "}
             </p>
             <p className="text-gray-700 mb-6">
-              Je souhaite aujourd&apos;hui accompagner les particuliers et
+              J’accompagne les particuliers et les
               professionnels dans la correction et la relecture de leurs
               documents pour leur permettre de communiquer de manière claire,
               précise et élégante.{" "}
@@ -166,8 +182,11 @@ export default async function HomePage() {
 
           <div className="md:w-1/2 flex justify-center">
             <img
-              src="/cadre-lorena.webp"
+              src="/optimized/cadre-lorena.webp"
               alt="Portrait de Lorena Guedouani"
+              width={360}
+              height={420}
+              loading="lazy"
               className="w-full max-w-sm md:w-[500px] rounded-lg mx-auto"
             />
           </div>
@@ -185,7 +204,7 @@ export default async function HomePage() {
       >
         <h2
           id="services-public"
-          className="text-3xl font-bold mb-10 text-[#B76E79] relative text-center
+          className="text-3xl font-bold mb-10 text-brand-strong relative text-center
           after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
         >
           À qui s’adressent mes services ?
@@ -268,7 +287,7 @@ export default async function HomePage() {
         aria-labelledby="prestations-titre"
         className="relative justify-center items-center"
         style={{
-          backgroundImage: "url('/image-carnet-2.webp')",
+          backgroundImage: "url('/optimized/image-carnet-2.avif')",
           backgroundPosition: "center",
           backgroundSize: "cover",
           minHeight: "70vh",
@@ -320,7 +339,7 @@ export default async function HomePage() {
             <div className="mt-auto">
               <Link
                 href="/traduction"
-                className="inline-flex px-6 py-3 bg-[#B76E79] text-white rounded-md hover:bg-[#a4626c] transition-colors duration-300"
+                className="inline-flex px-6 py-3 bg-brand-strong text-white rounded-md hover:bg-brand-hover transition-colors duration-300"
               >
                 En savoir plus
               </Link>
@@ -340,7 +359,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#B76E79]">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-strong">
                 Carnet de correction
               </p>
               <h2
@@ -353,7 +372,7 @@ export default async function HomePage() {
 
             <Link
               href="/blog"
-              className="inline-flex w-fit rounded-md border border-[#B76E79] px-5 py-3 text-sm font-semibold text-[#B76E79] transition hover:bg-[#B76E79] hover:text-white"
+              className="inline-flex w-fit rounded-md border border-[#B76E79] px-5 py-3 text-sm font-semibold text-brand-strong transition hover:bg-brand-strong hover:text-white"
             >
               Voir le blog
             </Link>
@@ -371,7 +390,7 @@ export default async function HomePage() {
               {latestArticles.map((article) => {
                 const date = formatArticleDate(article.published_at);
                 const articleImage =
-                  latestArticleImages.get(article.id) ?? "/image-carnet.webp";
+                  latestArticleImages.get(article.id) ?? "/optimized/image-carnet.avif";
 
                 return (
                   <Link
@@ -401,12 +420,12 @@ export default async function HomePage() {
                         {date ? (
                           <time
                             dateTime={article.published_at ?? undefined}
-                            className="text-sm font-semibold text-[#B76E79]"
+                            className="text-sm font-semibold text-brand-strong"
                           >
                             {date}
                           </time>
                         ) : null}
-                        <h3 className="mt-3 text-xl font-semibold leading-snug text-gray-900 transition group-hover:text-[#B76E79]">
+                        <h3 className="mt-3 text-xl font-semibold leading-snug text-gray-900 transition group-hover:text-brand-strong">
                           {article.title}
                         </h3>
                         {article.excerpt ? (
@@ -414,7 +433,7 @@ export default async function HomePage() {
                             {article.excerpt}
                           </p>
                         ) : null}
-                        <span className="mt-6 inline-flex text-sm font-semibold text-[#B76E79]">
+                        <span className="mt-6 inline-flex text-sm font-semibold text-brand-strong">
                           Lire l&apos;article
                         </span>
                       </div>

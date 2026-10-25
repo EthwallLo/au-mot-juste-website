@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import MarkdownContent from "@/app/components/markdownContent";
 import { getArticleImageUrl } from "@/app/lib/articleImages";
 import { getPublishedBlogPostBySlug } from "@/app/lib/blog";
+import { createPageMetadata, SITE_NAME, SITE_URL } from "@/app/lib/seo";
 
 type BlogArticlePageProps = {
   params: Promise<{
@@ -40,23 +41,36 @@ export async function generateMetadata({
   if (!article) {
     return {
       title: "Article introuvable | Au mot juste",
+      robots: { index: false, follow: false },
     };
   }
 
+  const description =
+    article.excerpt ??
+    "Article du blog Au mot juste sur la correction et la relecture.";
+  const path = `/blog/${encodeURIComponent(article.slug)}`;
+  const image = await getArticleImageUrl(
+    article.cover_image_url,
+    "/optimized/image-carnet-2.avif",
+  );
+
   return {
-    title: `${article.title} | Au mot juste`,
-    description:
-      article.excerpt ??
-      "Article du blog Au mot juste sur la correction et la relecture.",
-    alternates: {
-      canonical: `https://aumotjuste-correction.fr/blog/${article.slug}`,
-    },
+    ...createPageMetadata({
+      title: `${article.title} | Au mot juste`,
+      description,
+      path,
+    }),
     openGraph: {
       title: article.title,
-      description: article.excerpt ?? undefined,
+      description,
+      url: new URL(path, SITE_URL).toString(),
+      siteName: SITE_NAME,
+      locale: "fr_FR",
       type: "article",
       publishedTime: article.published_at ?? undefined,
-      images: article.cover_image_url ? [article.cover_image_url] : undefined,
+      modifiedTime: article.updated_at,
+      authors: ["Lorena Guedouani"],
+      images: [{ url: image, alt: article.title }],
     },
   };
 }
@@ -72,7 +86,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
   const date = formatDate(article.published_at);
   const headerImage = await getArticleImageUrl(
     article.cover_image_url,
-    "/image-carnet-2.webp",
+    "/optimized/image-carnet-2.avif",
   );
 
   return (
@@ -101,7 +115,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         <div>
           <Link
             href="/blog"
-            className="inline-flex rounded-sm text-sm font-semibold text-[#B76E79] hover:text-[#a4626c]"
+            className="inline-flex rounded-sm text-sm font-semibold text-brand-strong hover:text-brand-hover"
           >
             ← Retour au blog
           </Link>
@@ -109,7 +123,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
           {date ? (
             <time
               dateTime={article.published_at ?? undefined}
-              className="mt-8 block text-sm font-semibold uppercase tracking-[0.16em] text-[#B76E79]"
+              className="mt-8 block text-sm font-semibold uppercase tracking-[0.16em] text-brand-strong"
             >
               Publié le {date}
             </time>
@@ -135,7 +149,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
           >
             <div className="grid gap-5 sm:grid-cols-[96px_1fr] sm:items-start lg:block">
               <Image
-                src="/lorena-moi.png"
+                src="/optimized/lorena-moi.webp"
                 alt="Portrait de Lorena Guedouani"
                 width={96}
                 height={96}
@@ -147,7 +161,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
                   <div>
                     <h2
                       id="autrice-article"
-                      className="text-base font-bold text-[#B76E79]"
+                      className="text-base font-bold text-brand-strong"
                     >
                       Lorena
                     </h2>
@@ -156,7 +170,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
                   <Link
                     href="/blog"
-                    className="text-sm text-gray-500 transition hover:text-[#B76E79]"
+                    className="text-sm text-gray-500 transition hover:text-brand-strong"
                   >
                     Voir plus d’articles →
                   </Link>

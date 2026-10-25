@@ -21,20 +21,20 @@ function renderInlineMarkdown(text: string, keyPrefix: string) {
           href={match[3]}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-[#B76E79] underline-offset-4 hover:underline"
+          className="font-medium text-brand-strong underline-offset-4 hover:underline"
         >
           {match[2]}
         </a>,
       );
     } else if (match[4]) {
       parts.push(
-        <strong key={key} className="font-semibold text-[#B76E79]">
+        <strong key={key} className="font-semibold text-brand-strong">
           <em>{match[4]}</em>
         </strong>,
       );
     } else if (match[5] || match[7]) {
       parts.push(
-        <strong key={key} className="font-semibold text-[#B76E79]">
+        <strong key={key} className="font-semibold text-brand-strong">
           {match[5] ?? match[7]}
         </strong>,
       );
@@ -209,7 +209,7 @@ export default function MarkdownContent({ content }: { content: string }) {
         if (block.type === "heading") {
           if (block.level === 1) {
             return (
-              <h2 key={key} className="pt-4 text-3xl font-bold text-[#B76E79]">
+              <h2 key={key} className="pt-4 text-3xl font-bold text-brand-strong">
                 {renderInlineMarkdown(block.text, key)}
               </h2>
             );
@@ -217,14 +217,14 @@ export default function MarkdownContent({ content }: { content: string }) {
 
           if (block.level === 2) {
             return (
-              <h3 key={key} className="pt-3 text-2xl font-bold text-[#B76E79]">
+              <h3 key={key} className="pt-3 text-2xl font-bold text-brand-strong">
                 {renderInlineMarkdown(block.text, key)}
               </h3>
             );
           }
 
           return (
-            <h4 key={key} className="pt-2 text-xl font-semibold text-[#B76E79]">
+            <h4 key={key} className="pt-2 text-xl font-semibold text-brand-strong">
               {renderInlineMarkdown(block.text, key)}
             </h4>
           );

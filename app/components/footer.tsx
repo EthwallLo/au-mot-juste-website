@@ -18,7 +18,7 @@ export default function Footer() {
         </div>
 
         <address className="not-italic text-[#333333] flex flex-col items-start">
-          <h4 className="font-semibold mb-2 text-[#B76E79]">Contact</h4>
+          <h4 className="font-semibold mb-2 text-brand-strong">Contact</h4>
           <p>
             Téléphone :
             <a href="tel:+33769358103" className="hover:underline"> +33 7 69 35 81 03</a>
@@ -30,7 +30,7 @@ export default function Footer() {
         </address>
 
         <nav aria-label="Liens de pied de page" className="text-[#333333] flex flex-col items-start">
-          <h4 className="font-semibold mb-2 text-[#B76E79]">Informations</h4>
+          <h4 className="font-semibold mb-2 text-brand-strong">Informations</h4>
           <ul className="space-y-1">
             <li><Link href="/confidentialite" className="hover:underline">Politique de confidentialité</Link></li>
             <li><Link href="/mentions-legales" className="hover:underline">Mentions légales</Link></li>
@@ -46,7 +46,7 @@ export default function Footer() {
           href="https://lorenaguedouani.fr"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-[#B76E79] hover:underline"
+          className="font-semibold text-brand-strong hover:underline"
         >
           Fait avec ♥ par Lorena Guedouani
         </Link>

@@ -25,8 +25,7 @@ function getMetaContent(html: string, attributeName: "property" | "name", key: s
 function isLikelyDirectImageUrl(url: URL) {
   return (
     IMAGE_EXTENSION_PATTERN.test(url.pathname) ||
-    url.hostname === "images.unsplash.com" ||
-    url.pathname.includes("/storage/v1/object/public/")
+    url.hostname === "images.unsplash.com"
   );
 }
 

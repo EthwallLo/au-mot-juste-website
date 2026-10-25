@@ -30,12 +30,12 @@ export default function NotFound() {
       <div className="relative mx-auto flex min-h-[calc(100svh-13rem)] max-w-6xl items-center px-5 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-28 md:min-h-[calc(100svh-10rem)] md:px-12 md:pb-12">
         <div className="grid w-full items-center gap-6 md:gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
           <div className="max-w-2xl">
-            <p className="-translate-y-1 mb-2 inline-flex rounded-full border border-[#d9bcc2] bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#B76E79] shadow-sm sm:-translate-y-2 sm:text-sm">
+            <p className="-translate-y-1 mb-2 inline-flex rounded-full border border-[#d9bcc2] bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-brand-strong shadow-sm sm:-translate-y-2 sm:text-sm">
               Page introuvable
             </p>
 
             <p
-              className={`${cutive.className} text-5xl text-[#B76E79] sm:text-7xl md:text-8xl`}
+              className={`${cutive.className} text-5xl text-brand-strong sm:text-7xl md:text-8xl`}
             >
               404
             </p>
@@ -57,13 +57,13 @@ export default function NotFound() {
             <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:flex sm:flex-row sm:gap-4">
               <Link
                 href="/"
-                className="rounded-full bg-[#B76E79] px-4 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-[#B76E79]/20 transition hover:bg-[#a45f6a] sm:px-7 sm:py-4 sm:text-base"
+                className="rounded-full bg-brand-strong px-4 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-[#B76E79]/20 transition hover:bg-brand-hover sm:px-7 sm:py-4 sm:text-base"
               >
                 Retour à l&apos;accueil
               </Link>
               <Link
                 href="/contact"
-                className="rounded-full border border-[#d7bcc1] bg-white/80 px-4 py-3.5 text-center text-sm font-semibold text-gray-700 transition hover:border-[#B76E79] hover:text-[#B76E79] sm:px-7 sm:py-4 sm:text-base"
+                className="rounded-full border border-[#d7bcc1] bg-white/80 px-4 py-3.5 text-center text-sm font-semibold text-gray-700 transition hover:border-[#B76E79] hover:text-brand-strong sm:px-7 sm:py-4 sm:text-base"
               >
                 Me contacter
               </Link>
@@ -83,7 +83,7 @@ export default function NotFound() {
                 />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B76E79] sm:text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-strong sm:text-sm">
                   Au mot juste
                 </p>
                 <p className="mt-1 text-base font-semibold text-gray-800 sm:text-lg">
@@ -108,7 +108,7 @@ export default function NotFound() {
                         {link.description}
                       </p>
                     </div>
-                    <span aria-hidden="true" className="hidden text-xl text-[#B76E79] transition group-hover:translate-x-1 lg:block lg:text-2xl">
+                    <span aria-hidden="true" className="hidden text-xl text-brand-strong transition group-hover:translate-x-1 lg:block lg:text-2xl">
                       →
                     </span>
                   </div>

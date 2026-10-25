@@ -1,3 +1,12 @@
+import { createPageMetadata } from "../lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Politique de confidentialité | Au mot juste",
+  description:
+    "Consultez la politique de confidentialité d’Au mot juste : utilisation du formulaire de contact, traitement des données et moyens d’exercer vos droits.",
+  path: "/confidentialite",
+});
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="w-full min-h-screen flex flex-col">
@@ -5,7 +14,7 @@ export default function PrivacyPolicyPage() {
         aria-labelledby="confidentialite-titre"
         className="relative w-full h-[45vh] flex justify-center items-center"
         style={{
-          backgroundImage: "url('/image-carnet.webp')",
+          backgroundImage: "url('/optimized/image-carnet.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -36,7 +45,7 @@ export default function PrivacyPolicyPage() {
                 naviguez sur ce site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 1. Responsable du traitement des données
               </h2>
               <p>
@@ -48,7 +57,7 @@ export default function PrivacyPolicyPage() {
                 vous pouvez me contacter via la page{" "}
                 <a
                   href="https://aumotjuste-correction.fr/contact"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   rel="noopener noreferrer"
                 >
                   Contact
@@ -56,7 +65,7 @@ export default function PrivacyPolicyPage() {
                 du site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 2. Données collectées
               </h2>
               <p>
@@ -86,7 +95,7 @@ export default function PrivacyPolicyPage() {
                 traitement de votre demande.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 3. Finalités de la collecte
               </h2>
               <p>Les données collectées sont utilisées uniquement pour :</p>
@@ -103,7 +112,7 @@ export default function PrivacyPolicyPage() {
                 des fins commerciales non sollicitées.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 4. Partage des données
               </h2>
               <p>
@@ -126,7 +135,7 @@ export default function PrivacyPolicyPage() {
                 d’audience du site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 5. Durée de conservation
               </h2>
               <p>
@@ -135,7 +144,7 @@ export default function PrivacyPolicyPage() {
                 supprimées ou archivées à des fins légales si nécessaire.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 6. Sécurité des données
               </h2>
               <p>
@@ -144,7 +153,7 @@ export default function PrivacyPolicyPage() {
                 toute perte, accès non autorisé, modification ou divulgation.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 7. Mesure d’audience et cookies
               </h2>
 
@@ -197,7 +206,7 @@ export default function PrivacyPolicyPage() {
                 des outils d’analyse du site.
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 8. Vos droits
               </h2>
               <p>
@@ -218,7 +227,7 @@ export default function PrivacyPolicyPage() {
                 Vous pouvez exercer ces droits en me contactant via la page{" "}
                 <a
                   href="https://aumotjuste-correction.fr/contact"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   rel="noopener noreferrer"
                 >
                   Contact
@@ -231,7 +240,7 @@ export default function PrivacyPolicyPage() {
                 réclamation auprès de la{" "}
                 <a
                   href="https://www.cnil.fr/fr"
-                  className="text-[#B76E79] font-bold"
+                  className="text-brand-strong font-bold"
                   rel="noopener noreferrer"
                 >
                   CNIL
@@ -239,7 +248,7 @@ export default function PrivacyPolicyPage() {
                 .
               </p>
 
-              <h2 className="text-2xl font-bold text-[#B76E79]">
+              <h2 className="text-2xl font-bold text-brand-strong">
                 9. Modification de la politique de confidentialité
               </h2>
               <p>

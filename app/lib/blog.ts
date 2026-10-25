@@ -1,3 +1,9 @@
+import "server-only";
+import { neon } from "@neondatabase/serverless";
+import { unstable_cache } from "next/cache";
+
+export const BLOG_CACHE_TAG = "blog-articles";
+
 export type BlogStatus = "draft" | "published";
 
 export type BlogPost = {
@@ -24,6 +30,7 @@ export type BlogPostPreview = Pick<
   | "cover_image_source"
   | "published_at"
   | "created_at"
+  | "updated_at"
 >;
 
 export class BlogConfigError extends Error {}
@@ -31,19 +38,9 @@ export class BlogInputError extends Error {}
 export class BlogDataError extends Error {}
 
 const PUBLIC_FIELDS =
-  "id,title,slug,excerpt,cover_image_url,cover_image_source,published_at,created_at";
+  "id,title,slug,excerpt,cover_image_url,cover_image_source,published_at,created_at,updated_at";
 const ARTICLE_FIELDS =
   "id,title,slug,excerpt,content,cover_image_url,cover_image_source,status,published_at,created_at,updated_at";
-
-type RequestMode = "public" | "admin";
-
-type SupabaseRequestOptions = RequestInit & {
-  supabaseMode?: RequestMode;
-  next?: {
-    revalidate?: number | false;
-    tags?: string[];
-  };
-};
 
 type BlogPostMutation = {
   title: string;
@@ -56,95 +53,49 @@ type BlogPostMutation = {
   published_at: string | null;
 };
 
-function getSupabaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SUPABASE_URL ??
-    process.env.SUPABASE_URL ??
-    ""
-  ).replace(/\/$/, "");
-}
+async function queryArticles<T>(statement: string, parameters: unknown[] = []): Promise<T[]> {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
 
-function getSupabaseKey(mode: RequestMode) {
-  if (mode === "admin") {
-    return process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  }
-
-  return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    process.env.SUPABASE_ANON_KEY ??
-    ""
-  );
-}
-
-function getArticlesTableName() {
-  return process.env.SUPABASE_BLOG_TABLE ?? "articles";
-}
-
-function getSupabaseConfig(mode: RequestMode) {
-  const url = getSupabaseUrl();
-  const key = getSupabaseKey(mode);
-
-  if (!url) {
-    throw new BlogConfigError("La variable NEXT_PUBLIC_SUPABASE_URL manque.");
-  }
-
-  if (!key) {
+  if (!databaseUrl) {
     throw new BlogConfigError(
-      mode === "admin"
-        ? "La variable SUPABASE_SERVICE_ROLE_KEY manque pour administrer le blog."
-        : "La variable NEXT_PUBLIC_SUPABASE_ANON_KEY manque.",
+      "La connexion à Neon manque. Ajoutez DATABASE_URL aux variables d’environnement.",
     );
   }
 
-  return { key, url };
-}
+  try {
+    const rows = await neon(databaseUrl).query(statement, parameters);
 
-function getSupabaseEndpoint(query: string, mode: RequestMode) {
-  const { url } = getSupabaseConfig(mode);
-  return `${url}/rest/v1/${getArticlesTableName()}${query}`;
-}
+    return rows.map((row) => {
+      const normalized = { ...row };
 
-async function supabaseRequest<T>(
-  query: string,
-  { supabaseMode = "public", headers, ...init }: SupabaseRequestOptions = {},
-) {
-  const { key } = getSupabaseConfig(supabaseMode);
-  const requestHeaders = new Headers(headers);
-  requestHeaders.set("apikey", key);
-  requestHeaders.set("Authorization", `Bearer ${key}`);
-  requestHeaders.set("Content-Type", "application/json");
+      for (const field of ["published_at", "created_at", "updated_at"]) {
+        if (normalized[field] instanceof Date) {
+          normalized[field] = normalized[field].toISOString();
+        }
+      }
 
-  const response = await fetch(getSupabaseEndpoint(query, supabaseMode), {
-    ...init,
-    headers: requestHeaders,
-  });
+      return normalized as T;
+    });
+  } catch (error) {
+    const code =
+      error && typeof error === "object" && "code" in error ? error.code : null;
 
-  if (!response.ok) {
-    let details = "";
-
-    try {
-      const errorBody = (await response.json()) as { message?: string };
-      details = errorBody.message ?? "";
-    } catch {
-      details = await response.text();
+    if (code === "23505") {
+      throw new BlogInputError("Un article utilise déjà cette adresse. Modifiez le slug.");
     }
 
-    throw new BlogDataError(
-      details || `Erreur Supabase (${response.status}).`,
-    );
+    if (code === "42P01") {
+      throw new BlogConfigError(
+        "La table des articles n’existe pas encore. Exécutez npm run db:setup pour la créer dans Neon.",
+      );
+    }
+
+    if (code === "22P02") {
+      throw new BlogInputError("L’identifiant de l’article est invalide.");
+    }
+
+    throw new BlogDataError("Impossible d’accéder aux articles. Vérifiez la connexion à Neon.");
   }
-
-  if (response.status === 204) {
-    return null as T;
-  }
-
-  return (await response.json()) as T;
-}
-
-function buildQuery(params: Record<string, string>) {
-  const searchParams = new URLSearchParams(params);
-  return `?${searchParams.toString()}`;
 }
 
 function getString(
@@ -216,6 +167,10 @@ export function sanitizeBlogPostPayload(input: unknown): BlogPostMutation {
     payload.status === "published" ? "published" : "draft";
   const publishedAt = getString(payload.published_at, "published_at");
 
+  if (status === "published" && publishedAt && Number.isNaN(Date.parse(publishedAt))) {
+    throw new BlogInputError("La date de publication est invalide.");
+  }
+
   if (!slug) {
     throw new BlogInputError("Le slug de l'article est obligatoire.");
   }
@@ -239,54 +194,46 @@ export function sanitizeBlogPostPayload(input: unknown): BlogPostMutation {
   };
 }
 
-export async function getPublishedBlogPosts() {
-  return supabaseRequest<BlogPostPreview[]>(
-    buildQuery({
-      select: PUBLIC_FIELDS,
-      status: "eq.published",
-      order: "published_at.desc.nullslast,created_at.desc",
-    }),
-    { next: { revalidate: 60 } },
-  );
-}
+export const getPublishedBlogPosts = unstable_cache(
+  () => queryArticles<BlogPostPreview>(
+    `SELECT ${PUBLIC_FIELDS} FROM public.articles
+     WHERE status = 'published'
+     ORDER BY published_at DESC NULLS LAST, created_at DESC`,
+  ),
+  ["neon-published-blog-posts"],
+  { revalidate: 60, tags: [BLOG_CACHE_TAG] },
+);
 
-export async function getPublishedBlogPostBySlug(slug: string) {
-  const posts = await supabaseRequest<BlogPost[]>(
-    buildQuery({
-      select: ARTICLE_FIELDS,
-      slug: `eq.${slug}`,
-      status: "eq.published",
-      limit: "1",
-    }),
-    { next: { revalidate: 60 } },
-  );
+export const getPublishedBlogPostBySlug = unstable_cache(
+  async (slug: string) => {
+    const posts = await queryArticles<BlogPost>(
+      `SELECT ${ARTICLE_FIELDS} FROM public.articles
+       WHERE slug = $1 AND status = 'published' LIMIT 1`,
+      [slug],
+    );
 
-  return posts[0] ?? null;
-}
+    return posts[0] ?? null;
+  },
+  ["neon-published-blog-post"],
+  { revalidate: 60, tags: [BLOG_CACHE_TAG] },
+);
 
 export async function getAllBlogPosts() {
-  return supabaseRequest<BlogPost[]>(
-    buildQuery({
-      select: ARTICLE_FIELDS,
-      order: "updated_at.desc,created_at.desc",
-    }),
-    { cache: "no-store", supabaseMode: "admin" },
+  return queryArticles<BlogPost>(
+    `SELECT ${ARTICLE_FIELDS} FROM public.articles
+     ORDER BY updated_at DESC, created_at DESC`,
   );
 }
 
 export async function createBlogPost(input: unknown) {
   const payload = sanitizeBlogPostPayload(input);
-  const posts = await supabaseRequest<BlogPost[]>(
-    buildQuery({ select: ARTICLE_FIELDS }),
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-      cache: "no-store",
-      headers: {
-        Prefer: "return=representation",
-      },
-      supabaseMode: "admin",
-    },
+  const posts = await queryArticles<BlogPost>(
+    `INSERT INTO public.articles
+     (title, slug, excerpt, content, cover_image_url, cover_image_source, status, published_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING ${ARTICLE_FIELDS}`,
+    [payload.title, payload.slug, payload.excerpt, payload.content,
+      payload.cover_image_url, payload.cover_image_source, payload.status, payload.published_at],
   );
 
   return posts[0];
@@ -294,38 +241,25 @@ export async function createBlogPost(input: unknown) {
 
 export async function updateBlogPost(id: string, input: unknown) {
   const payload = sanitizeBlogPostPayload(input);
-  const posts = await supabaseRequest<BlogPost[]>(
-    buildQuery({
-      select: ARTICLE_FIELDS,
-      id: `eq.${id}`,
-    }),
-    {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-      cache: "no-store",
-      headers: {
-        Prefer: "return=representation",
-      },
-      supabaseMode: "admin",
-    },
+  const posts = await queryArticles<BlogPost>(
+    `UPDATE public.articles SET
+     title = $1, slug = $2, excerpt = $3, content = $4,
+     cover_image_url = $5, cover_image_source = $6, status = $7, published_at = $8
+     WHERE id = $9 RETURNING ${ARTICLE_FIELDS}`,
+    [payload.title, payload.slug, payload.excerpt, payload.content,
+      payload.cover_image_url, payload.cover_image_source, payload.status, payload.published_at, id],
   );
+
+  if (!posts[0]) {
+    throw new BlogInputError("Cet article est introuvable.");
+  }
 
   return posts[0];
 }
 
 export async function deleteBlogPost(id: string) {
-  await supabaseRequest<BlogPost[]>(
-    buildQuery({
-      select: "id",
-      id: `eq.${id}`,
-    }),
-    {
-      method: "DELETE",
-      cache: "no-store",
-      headers: {
-        Prefer: "return=representation",
-      },
-      supabaseMode: "admin",
-    },
+  await queryArticles<{ id: string }>(
+    "DELETE FROM public.articles WHERE id = $1 RETURNING id",
+    [id],
   );
 }
