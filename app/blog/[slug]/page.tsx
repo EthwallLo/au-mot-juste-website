@@ -5,7 +5,7 @@ import BlogArticle from "@/app/components/blogArticle";
 import { getArticleImageUrl } from "@/app/lib/articleImages";
 import { getPublishedBlogPostBySlug } from "@/app/lib/blog";
 import { createPageMetadata, SITE_NAME, SITE_URL } from "@/app/lib/seo";
-import { isLocalNewsletterEnabled } from "@/app/lib/newsletterConfig";
+import { isNewsletterEnabled } from "@/app/lib/newsletterConfig";
 
 type BlogArticlePageProps = {
   params: Promise<{
@@ -71,5 +71,5 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
     "/optimized/image-carnet-2.avif",
   );
 
-  return <BlogArticle article={article} headerImage={headerImage} newsletterEnabled={isLocalNewsletterEnabled()} />;
+  return <BlogArticle article={article} headerImage={headerImage} newsletterEnabled={isNewsletterEnabled()} />;
 }

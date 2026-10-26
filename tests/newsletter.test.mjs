@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -18,7 +18,7 @@ function loadModule(file, dependencies, env = {}, globals = {}) {
   }).outputText;
   vm.runInNewContext(source, {
     module: testModule, exports: testModule.exports,
-    require: (name) => name in dependencies ? dependencies[name] : require(name),
+    require: (name) => name in dependencies ? dependencies[name] : name === "./seo" ? { SITE_URL: "https://aumotjuste-correction.fr" } : require(name),
     process: { env, cwd: () => process.cwd() },
     Buffer, URL, Date, setTimeout, console, ...globals,
   }, { filename: file });
@@ -92,6 +92,38 @@ test("la newsletter locale exige une confirmation et permet de se désinscrire",
   assert.equal((await newsletter.getLocalNewsletterSnapshot()).subscribers[0].status, "active");
 });
 
+test("la boîte de test actualise les en-têtes et les confirmations sans renouveler les liens", async (t) => {
+  const { newsletter, env, advance } = await localNewsletter(t);
+  await newsletter.subscribeToLocalNewsletter("lectrice@example.test", true, "http://localhost:3000");
+  const file = path.join(env.NEWSLETTER_LOCAL_DATA_DIR, "state.json");
+  const state = JSON.parse(await readFile(file, "utf8"));
+  const original = { ...state.messages[0] };
+  state.messages[0].subject = "Ancienne confirmation";
+  state.messages[0].html = "<h1>Des mots justes dans votre boîte mail.</h1>";
+  state.messages[0].text = "Des mots justes dans votre boîte mail.";
+  const articleBody = "<p>Article conservé : LE CARNET DE LORENA</p>";
+  const article = { ...original, id: "article-archive", kind: "article", html: `<p>Au mot juste</p><p style="font-size:12px">LE CARNET DE LORENA</p>${articleBody}`, text: "Article conservé" };
+  state.messages.push(article);
+  await writeFile(file, JSON.stringify(state));
+  const before = await readFile(file, "utf8");
+
+  const snapshot = await newsletter.getLocalNewsletterSnapshot();
+  const confirmation = snapshot.messages.find((message) => message.kind === "confirmation");
+  assert.ok(!confirmation.html.includes("Des mots justes dans votre boîte mail"));
+  assert.ok(!confirmation.text.includes("Des mots justes dans votre boîte mail"));
+  assert.ok(confirmation.html.includes("Merci pour votre intérêt,"));
+  assert.ok(confirmation.html.includes("Pour confirmer votre inscription et recevoir mes prochains articles par e-mail, cliquez sur le bouton ci-dessous :"));
+  assert.ok(confirmation.html.includes(">Confirmez votre inscription au blog</h1>"));
+  assert.ok(!confirmation.html.includes("LE CARNET DE LORENA"));
+  assert.ok(confirmation.text.startsWith("Au mot juste\n\nConfirmez votre inscription au blog\n\nMerci pour votre intérêt,"));
+  assert.ok(confirmation.text.endsWith("À bientôt !\nLorena - Au mot juste"));
+  for (const key of ["id", "to", "created_at", "action_url"]) assert.equal(confirmation[key], original[key]);
+  assert.equal(JSON.stringify(snapshot.messages.find((message) => message.kind === "article")), JSON.stringify({ ...article, html: `<p>Au mot juste</p>${articleBody}` }));
+  assert.equal(await readFile(file, "utf8"), before);
+  advance(25 * 60 * 60 * 1000);
+  await assert.rejects(() => newsletter.confirmLocalNewsletter(actionToken(confirmation)), newsletter.NewsletterInputError);
+});
+
 test("un lien expiré peut être remplacé par une nouvelle demande d’inscription", async (t) => {
   const { newsletter, advance } = await localNewsletter(t);
   await newsletter.subscribeToLocalNewsletter("lectrice@example.test", true, "http://localhost:3000");
@@ -162,6 +194,8 @@ test("le prototype est désactivé sur Vercel et les données des abonnés reste
     "@/app/lib/newsletterRequest": request,
     "@/app/lib/newsletterWorker": { syncLocalNewsletter: async () => 0 },
     "@/app/lib/newsletterExample": loadModule("app/lib/newsletterExample.ts", {}),
+    "@/app/lib/newsletterProduction": {},
+    "@/app/lib/newsletterSchedule": {},
   });
   assert.equal((await route.GET(new NextRequest("http://localhost:3000/api/admin/newsletter"))).status, 401);
   assert.equal((await route.GET(new NextRequest("https://example.com/api/admin/newsletter"))).status, 404);
@@ -176,5 +210,7 @@ test("le mail échappe le HTML et conserve les listes, le gras, les citations et
   assert.ok(result.html.includes("<strong"));
   assert.ok(result.html.includes("<ul"));
   assert.ok(result.html.includes("<blockquote"));
+  assert.ok(result.html.includes(">Au mot juste</p>"));
+  assert.ok(!result.html.includes("LE CARNET DE LORENA"));
   assert.ok(result.text.includes(example.content));
 });

@@ -6,7 +6,7 @@ export function getDatabaseMode(env = process.env) {
 }
 
 export function getLocalDatabaseDirectory(env = process.env) {
-  return path.resolve(env.LOCAL_DATABASE_PATH || ".local/database");
+  return path.resolve(/* turbopackIgnore: true */ env.LOCAL_DATABASE_PATH || ".local/database");
 }
 
 export function getDatabaseCacheNamespace(env = process.env) {

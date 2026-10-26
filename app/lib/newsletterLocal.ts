@@ -52,7 +52,7 @@ async function withState<T>(operation: (state: NewsletterState) => T | Promise<T
   assertLocalMode();
   const directory = dataDirectory();
   await mkdir(directory, { recursive: true });
-  const lockPath = path.join(directory, "state.lock");
+  const lockPath = path.join(/* turbopackIgnore: true */ directory, "state.lock");
   const started = Date.now();
   let lock;
   while (!lock) {
@@ -67,7 +67,7 @@ async function withState<T>(operation: (state: NewsletterState) => T | Promise<T
     }
   }
 
-  const file = path.join(directory, "state.json");
+  const file = path.join(/* turbopackIgnore: true */ directory, "state.json");
   let temporaryFile: string | undefined;
   try {
     let state: NewsletterState;
@@ -82,7 +82,7 @@ async function withState<T>(operation: (state: NewsletterState) => T | Promise<T
     }
     const result = await operation(state);
     if (save) {
-      temporaryFile = path.join(directory, `state-${randomUUID()}.tmp`);
+      temporaryFile = path.join(/* turbopackIgnore: true */ directory, `state-${randomUUID()}.tmp`);
       await writeFile(temporaryFile, JSON.stringify(state, null, 2), { mode: 0o600 });
       await rename(temporaryFile, file);
     }
@@ -203,7 +203,10 @@ export async function simulateLocalArticleDelivery(article: BlogPost) {
 export async function getLocalNewsletterSnapshot() {
   return withState((state) => ({
     subscribers: state.subscribers.map(({ id, email, status, consent_at, confirmed_at }) => ({ id, email, status, consent_at, confirmed_at })),
-    messages: state.messages,
+    // Keep local previews current without changing stored messages or action links.
+    messages: state.messages.map((message) => message.kind === "confirmation"
+      ? { ...message, ...renderConfirmationEmail(message.action_url) }
+      : { ...message, html: message.html.replace(/(<p\b[^>]*>Au mot juste<\/p>)\s*<p\b[^>]*>LE CARNET DE LORENA<\/p>/, "$1") }),
     checked_at: state.checked_at,
   }), false);
 }

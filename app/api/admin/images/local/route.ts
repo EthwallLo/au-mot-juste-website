@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const directory = getLocalImagesDirectory();
     const filename = `${randomUUID()}.${BLOG_IMAGE_EXTENSIONS[file.type]}`;
     await mkdir(directory, { recursive: true });
-    await writeFile(path.join(directory, filename), new Uint8Array(await file.arrayBuffer()), { flag: "wx" });
+    await writeFile(path.join(/* turbopackIgnore: true */ directory, filename), new Uint8Array(await file.arrayBuffer()), { flag: "wx" });
     return NextResponse.json({ url: `${LOCAL_IMAGE_URL_PREFIX}${filename}` });
   } catch {
     return NextResponse.json({ error: "Impossible d’enregistrer l’image dans le dossier local." }, { status: 500 });

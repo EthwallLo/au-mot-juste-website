@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateBlog } from "@/app/lib/revalidateBlog";
 import { isAdminRequestAuthenticated } from "@/app/lib/adminSession";
+import { scheduleNewsletterAfterSave } from "@/app/lib/newsletterSchedule";
 import {
   BlogConfigError,
   BlogDataError,
@@ -47,6 +48,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const article = await updateBlogPost(id, await request.json());
     revalidateBlog();
+    await scheduleNewsletterAfterSave(article.id);
     return NextResponse.json({ article });
   } catch (error) {
     return apiError(error);

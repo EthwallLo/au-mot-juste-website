@@ -8,8 +8,8 @@ export default function Typewriter() {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setCurrentText(text);
-      return;
+      const frame = requestAnimationFrame(() => setCurrentText(text));
+      return () => cancelAnimationFrame(frame);
     }
 
     let i = 0;

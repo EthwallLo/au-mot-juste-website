@@ -47,15 +47,18 @@ function markdownEmail(content: string) {
   }).join("");
 }
 
-function shell(title: string, body: string, footer: string) {
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeEmailHtml(title)}</title></head><body style="margin:0;background:#f8f5f5;color:#333;font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:28px 12px"><table role="presentation" align="center" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #eadbdd;border-radius:12px"><tr><td style="padding:32px 28px;border-bottom:1px solid #eadbdd"><p style="margin:0;color:#94505d;font-size:25px;font-weight:700">Au mot juste</p><p style="margin:9px 0 0;font-size:12px;letter-spacing:2px;color:#777">LE CARNET DE LORENA</p></td></tr><tr><td style="padding:32px 28px;font-size:17px;line-height:1.8;overflow-wrap:anywhere">${body}</td></tr><tr><td style="padding:24px 28px;background:#fbf7f7;font-size:13px;line-height:1.7;color:#666">${footer}</td></tr></table></td></tr></table></body></html>`;
+function shell(title: string, body: string, footer = "") {
+  const footerRow = footer ? `<tr><td style="padding:24px 28px;background:#fbf7f7;font-size:13px;line-height:1.7;color:#666">${footer}</td></tr>` : "";
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeEmailHtml(title)}</title></head><body style="margin:0;background:#f8f5f5;color:#333;font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:28px 12px"><table role="presentation" align="center" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #eadbdd;border-radius:12px"><tr><td style="padding:32px 28px;border-bottom:1px solid #eadbdd"><p style="margin:0;color:#94505d;font-size:25px;font-weight:700">Au mot juste</p></td></tr><tr><td style="padding:32px 28px;font-size:17px;line-height:1.8;overflow-wrap:anywhere">${body}</td></tr>${footerRow}</table></td></tr></table></body></html>`;
 }
 
 export function renderConfirmationEmail(actionUrl: string) {
-  const subject = "Confirmez votre inscription";
-  const introduction = "Confirmez votre inscription pour recevoir les nouveaux articles directement dans votre boîte mail, à chaque publication.";
-  const html = shell(subject, `<p style="margin:0 0 24px">${introduction}</p><a href="${escapeEmailHtml(actionUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#94505d;border-radius:6px;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700">Confirmer mon inscription</a>`, "Lien valable 24 heures.");
-  return { subject, html, text: `${introduction}\n\nConfirmer mon inscription : ${actionUrl}\n\nLien valable 24 heures.` };
+  const subject = "Confirmez votre inscription au blog";
+  const greeting = "Merci pour votre intérêt,";
+  const introduction = "Pour confirmer votre inscription et recevoir mes prochains articles par e-mail, cliquez sur le bouton ci-dessous :";
+  const validity = "Ce lien est valable 24 heures.";
+  const html = shell(subject, `<h1 style="font-size:25px;line-height:1.35;margin:0 0 24px;color:#222">${escapeEmailHtml(subject)}</h1><p style="margin:0 0 24px">${greeting}<br>${introduction}</p><a href="${escapeEmailHtml(actionUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#94505d;border-radius:6px;color:#fff;padding:12px 22px;text-decoration:none;font-weight:700">Confirmer mon inscription</a><p style="margin:16px 0 24px;font-size:13px;color:#666">${validity}</p><p style="margin:0">À bientôt !<br>Lorena - Au mot juste</p>`);
+  return { subject, html, text: `Au mot juste\n\n${subject}\n\n${greeting}\n${introduction}\n\nConfirmer mon inscription : ${actionUrl}\n\n${validity}\n\nÀ bientôt !\nLorena - Au mot juste` };
 }
 
 export function renderArticleEmail(article: Pick<BlogPost, "title" | "content" | "cover_image_url" | "cover_image_source">, origin: string, unsubscribeUrl: string) {

@@ -10,7 +10,7 @@ import Image from "next/image";
 import { createPageMetadata } from "./lib/seo";
 import { connection } from "next/server";
 import NewsletterCallout from "./components/newsletterCallout";
-import { isLocalNewsletterEnabled } from "./lib/newsletterConfig";
+import { isNewsletterEnabled } from "./lib/newsletterConfig";
 
 export const metadata = createPageMetadata({
   title: "Correction et relecture de textes | Au mot juste",
@@ -38,7 +38,7 @@ function getBackgroundImage(url: string) {
 
 export default async function HomePage() {
   await connection();
-  const newsletterEnabled = isLocalNewsletterEnabled();
+  const newsletterEnabled = isNewsletterEnabled();
   let latestArticles: BlogPostPreview[] = [];
 
   try {

@@ -106,10 +106,21 @@ export default function PrivacyPolicyPage() {
                   prestation
                 </li>
                 <li>Assurer le bon fonctionnement et l’amélioration du site</li>
+                <li>
+                  Envoyer les nouveaux articles du blog aux personnes qui ont
+                  demandé et confirmé leur inscription par e-mail
+                </li>
               </ul>
               <p>
                 Vos données ne sont <strong>en aucun cas</strong> utilisées à
                 des fins commerciales non sollicitées.
+              </p>
+              <p>
+                L’inscription aux articles du blog enregistre votre adresse
+                e-mail et les dates de demande et de confirmation. Ces données
+                sont conservées dans Neon, la base de données du site. Les mails
+                sont envoyés avec Gmail. Vous pouvez arrêter ces envois avec le
+                lien de désinscription présent dans chaque mail d’article.
               </p>
 
               <h2 className="text-2xl font-bold text-brand-strong">

@@ -1,5 +1,14 @@
 import type { NextRequest } from "next/server";
-import { isLocalNewsletterEnabled, isLocalNewsletterOrigin } from "@/app/lib/newsletterConfig";
+import { getProductionNewsletterOrigin, isLocalNewsletterEnabled, isLocalNewsletterOrigin, isProductionNewsletterEnabled } from "@/app/lib/newsletterConfig";
+
+export function isProductionNewsletterRequest(request: NextRequest) {
+  if (!isProductionNewsletterEnabled()) return false;
+  try {
+    const origin = getProductionNewsletterOrigin();
+    const browserOrigin = request.headers.get("origin");
+    return (!browserOrigin || browserOrigin === origin) && new URL(request.url).origin === origin;
+  } catch { return false; }
+}
 
 export function getLocalNewsletterRequestOrigin(request: NextRequest) {
   try {
