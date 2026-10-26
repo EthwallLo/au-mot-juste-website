@@ -1,6 +1,8 @@
 import "server-only";
 import { neon } from "@neondatabase/serverless";
 import { unstable_cache } from "next/cache";
+import { getDatabaseCacheNamespace, getDatabaseMode } from "@/database/config.mjs";
+import { LOCAL_IMAGE_NAME_PATTERN, LOCAL_IMAGE_URL_PREFIX } from "@/app/lib/blogImageUpload";
 
 export const BLOG_CACHE_TAG = "blog-articles";
 
@@ -54,16 +56,19 @@ type BlogPostMutation = {
 };
 
 async function queryArticles<T>(statement: string, parameters: unknown[] = []): Promise<T[]> {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const mode = getDatabaseMode(process.env);
+  const databaseUrl = mode === "neon" ? process.env.DATABASE_URL?.trim() : undefined;
 
-  if (!databaseUrl) {
+  if (mode === "neon" && !databaseUrl) {
     throw new BlogConfigError(
       "La connexion à Neon manque. Ajoutez DATABASE_URL aux variables d’environnement.",
     );
   }
 
   try {
-    const rows = await neon(databaseUrl).query(statement, parameters);
+    const rows: Record<string, unknown>[] = mode === "local"
+      ? await (await import("@/database/local.mjs")).queryLocalDatabase(statement, parameters, process.env)
+      : await neon(databaseUrl!).query(statement, parameters);
 
     return rows.map((row) => {
       const normalized = { ...row };
@@ -86,15 +91,21 @@ async function queryArticles<T>(statement: string, parameters: unknown[] = []): 
 
     if (code === "42P01") {
       throw new BlogConfigError(
-        "La table des articles n’existe pas encore. Exécutez npm run db:setup pour la créer dans Neon.",
+        "La table des articles n’existe pas encore. Exécutez npm run db:setup pour l’initialiser.",
       );
+    }
+
+    if (code === "LOCAL_DATABASE_LOCKED") {
+      throw new BlogConfigError("La base locale est déjà utilisée par un autre processus. Arrêtez l’autre serveur ou la commande db:setup, puis réessayez.");
     }
 
     if (code === "22P02") {
       throw new BlogInputError("L’identifiant de l’article est invalide.");
     }
 
-    throw new BlogDataError("Impossible d’accéder aux articles. Vérifiez la connexion à Neon.");
+    throw new BlogDataError(mode === "local"
+      ? "Impossible d’accéder à la base locale. Vérifiez les droits d’accès au dossier .local."
+      : "Impossible d’accéder aux articles. Vérifiez la connexion à Neon.");
   }
 }
 
@@ -127,6 +138,11 @@ function optionalString(value: string) {
 function getCoverImageUrl(value: string) {
   if (!value) {
     return null;
+  }
+
+  if (getDatabaseMode(process.env) === "local" && value.startsWith(LOCAL_IMAGE_URL_PREFIX) &&
+      LOCAL_IMAGE_NAME_PATTERN.test(value.slice(LOCAL_IMAGE_URL_PREFIX.length))) {
+    return value;
   }
 
   let url: URL;
@@ -237,7 +253,7 @@ const getPublicBlogPostCandidates = unstable_cache(
      WHERE status IN ('published', 'scheduled')
      ORDER BY published_at DESC NULLS LAST, created_at DESC`,
   ),
-  ["neon-public-blog-candidates"],
+  ["public-blog-candidates", getDatabaseCacheNamespace(process.env)],
   { revalidate: 60, tags: [BLOG_CACHE_TAG] },
 );
 
@@ -251,7 +267,7 @@ const getPublicBlogPostCandidateBySlug = unstable_cache(
 
     return posts[0] ?? null;
   },
-  ["neon-public-blog-candidate"],
+  ["public-blog-candidate", getDatabaseCacheNamespace(process.env)],
   { revalidate: 60, tags: [BLOG_CACHE_TAG] },
 );
 

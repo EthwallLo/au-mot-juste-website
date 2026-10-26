@@ -21,6 +21,7 @@ html[data-text-size="large"] {
 }
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
   --brand-strong: #94505D;
@@ -35,13 +36,6 @@ html[data-text-size="large"] {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-cutive: "Cutive";
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import MarkdownContent from "@/app/components/markdownContent";
+import NewsletterSignup from "@/app/components/newsletterSignup";
 import type { BlogPost } from "@/app/lib/blog";
 
 type BlogArticleProps = {
@@ -10,6 +11,7 @@ type BlogArticleProps = {
   >;
   headerImage: string;
   onBack?: () => void;
+  newsletterEnabled?: boolean;
 };
 
 function formatDate(value: string | null) {
@@ -31,7 +33,7 @@ function getBackgroundImage(url: string) {
   return `url(${JSON.stringify(url)})`;
 }
 
-export default function BlogArticle({ article, headerImage, onBack }: BlogArticleProps) {
+export default function BlogArticle({ article, headerImage, onBack, newsletterEnabled = false }: BlogArticleProps) {
   const date = formatDate(article.published_at);
 
   return (
@@ -98,72 +100,76 @@ export default function BlogArticle({ article, headerImage, onBack }: BlogArticl
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 pb-10 sm:px-6 lg:grid-cols-[280px_minmax(0,760px)] lg:px-8">
         <aside className="order-2 lg:order-1">
-          <section
-            aria-labelledby="autrice-article"
-            className="rounded-md bg-[#f7f7f7] p-6 lg:sticky lg:top-28"
-          >
-            <div className="grid gap-5 sm:grid-cols-[96px_1fr] sm:items-start lg:block">
-              <Image
-                src="/optimized/lorena-moi.webp"
-                alt="Portrait de Lorena Guedouani"
-                width={96}
-                height={96}
-                className="h-24 w-24 rounded-full object-cover lg:h-28 lg:w-28"
-              />
+          <div className="space-y-6 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
+            <section
+              aria-labelledby="autrice-article"
+              className="rounded-md bg-[#f7f7f7] p-6"
+            >
+              <div className="grid gap-5 sm:grid-cols-[96px_1fr] sm:items-start lg:block">
+                <Image
+                  src="/optimized/lorena-moi.webp"
+                  alt="Portrait de Lorena Guedouani"
+                  width={96}
+                  height={96}
+                  className="h-24 w-24 rounded-full object-cover lg:h-28 lg:w-28"
+                />
 
-              <div>
-                <div className="mt-0 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:mt-5 lg:block">
-                  <div>
-                    <h2
-                      id="autrice-article"
-                      className="text-base font-bold text-brand-strong"
+                <div>
+                  <div className="mt-0 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:mt-5 lg:block">
+                    <div>
+                      <h2
+                        id="autrice-article"
+                        className="text-base font-bold text-brand-strong"
+                      >
+                        Lorena
+                      </h2>
+                      <div className="mt-2 h-px w-16 bg-gray-300" />
+                    </div>
+
+                    <Link
+                      href="/blog"
+                      target={onBack ? "_blank" : undefined}
+                      rel={onBack ? "noopener noreferrer" : undefined}
+                      className="text-sm text-gray-500 transition hover:text-brand-strong"
                     >
-                      Lorena
-                    </h2>
-                    <div className="mt-2 h-px w-16 bg-gray-300" />
+                      Voir plus d’articles →
+                    </Link>
                   </div>
 
-                  <Link
-                    href="/blog"
-                    target={onBack ? "_blank" : undefined}
-                    rel={onBack ? "noopener noreferrer" : undefined}
-                    className="text-sm text-gray-500 transition hover:text-brand-strong"
-                  >
-                    Voir plus d’articles →
-                  </Link>
-                </div>
-
-                <p className="mt-5 text-sm leading-7 text-gray-700">
-                  Correctrice-relectrice et passionnée de linguistique, je vous
-                  partage ici des conseils pour rendre vos textes plus clairs,
-                  plus fluides et plus justes. Avec Au mot juste, je vous
-                  accompagne dans la correction, la relecture et la précision
-                  rédactionnelle de vos écrits.
-                </p>
-
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:items-start">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-600">
-                    Correctrice-relectrice freelance
+                  <p className="mt-5 text-sm leading-7 text-gray-700">
+                    Correctrice-relectrice et passionnée de linguistique, je partage
+                    mes conseils pour des textes clairs et soignés.
                   </p>
-                  <Link
-                    href="https://www.linkedin.com/in/lorena-guedouani/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Profil LinkedIn de Lorena Guedouani"
-                    className="inline-flex w-fit"
-                  >
-                    <Image
-                      src="/linkedin.svg"
-                      alt=""
-                      aria-hidden="true"
-                      width={22}
-                      height={22}
-                    />
-                  </Link>
+
+                  <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:items-start">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-600">
+                      Correctrice-relectrice freelance
+                    </p>
+                    <Link
+                      href="https://www.linkedin.com/in/lorena-guedouani/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Profil LinkedIn de Lorena Guedouani"
+                      className="inline-flex w-fit"
+                    >
+                      <Image
+                        src="/linkedin.svg"
+                        alt=""
+                        aria-hidden="true"
+                        width={22}
+                        height={22}
+                      />
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+            {newsletterEnabled ? (
+              <div id="newsletter-article" className="rounded-md border border-gray-200 bg-white p-5">
+                <NewsletterSignup variant="sidebar" preview={Boolean(onBack)} />
+              </div>
+            ) : null}
+          </div>
         </aside>
 
         <div className="order-1 min-w-0 lg:order-2">

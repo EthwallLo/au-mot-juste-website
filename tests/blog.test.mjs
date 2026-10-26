@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { test } from "node:test";
 import vm from "node:vm";
@@ -7,13 +11,15 @@ import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
 import { getPayloadFromClientToken } from "@vercel/blob/client";
 import { NextRequest } from "next/server.js";
+import { getDatabaseMode, getDatabaseCacheNamespace } from "../database/config.mjs";
+import { queryLocalDatabase, closeLocalDatabase } from "../database/local.mjs";
 
 const require = createRequire(import.meta.url);
 
 function loadModule(file, dependencies, env = {}, globals = {}) {
   const testModule = { exports: {} };
   const source = ts.transpileModule(readFileSync(new URL(`../${file}`, import.meta.url), "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true },
   }).outputText;
 
   vm.runInNewContext(source, {
@@ -22,6 +28,9 @@ function loadModule(file, dependencies, env = {}, globals = {}) {
     require: (name) => name in dependencies ? dependencies[name] : require(name),
     process: { env },
     Date,
+    URL,
+    Buffer,
+    File,
     console,
     ...globals,
   }, { filename: file });
@@ -29,10 +38,13 @@ function loadModule(file, dependencies, env = {}, globals = {}) {
   return testModule.exports;
 }
 
-function loadBlog(db, env = { DATABASE_URL: "postgresql://test:test@example.invalid/test" }, options = {}) {
+function loadBlog(db, env = { VERCEL: "1", DATABASE_URL: "postgresql://test:test@example.invalid/test" }, options = {}) {
   return loadModule("app/lib/blog.ts", {
     "server-only": {},
     "next/cache": { unstable_cache: options.cache ?? ((callback) => callback) },
+    "@/database/config.mjs": { getDatabaseMode, getDatabaseCacheNamespace },
+    "@/database/local.mjs": { queryLocalDatabase },
+    "@/app/lib/blogImageUpload": loadModule("app/lib/blogImageUpload.ts", {}),
     "@neondatabase/serverless": {
       neon: () => ({ query: async (statement, parameters) => (await db.query(statement, parameters)).rows }),
     },
@@ -124,7 +136,7 @@ test("publication des articles sur PostgreSQL", async (t) => {
   });
 
   await t.test("la configuration et une table manquantes sont signalées", async () => {
-    const unconfigured = loadBlog(db, {});
+    const unconfigured = loadBlog(db, { VERCEL: "1" });
     await assert.rejects(() => unconfigured.getAllBlogPosts(), unconfigured.BlogConfigError);
     await db.exec("DROP TABLE public.articles");
     await assert.rejects(() => blog.getAllBlogPosts(), blog.BlogConfigError);
@@ -250,11 +262,12 @@ test("les erreurs de connexion ne divulguent pas les paramètres du serveur", as
 
 test("les images nécessitent une session et un jeton limité", async (t) => {
   const token = "vercel_blob_rw_teststore_0123456789abcdefghijklmnopqrstuvwxyz";
-  const loadRoute = (authenticated, env = { BLOB_READ_WRITE_TOKEN: token }) => loadModule(
+  const loadRoute = (authenticated, env = { VERCEL: "1", BLOB_READ_WRITE_TOKEN: token }) => loadModule(
     "app/api/admin/images/route.ts",
     {
       "@/app/lib/adminSession": { isAdminRequestAuthenticated: () => authenticated },
       "@/app/lib/blogImageUpload": loadModule("app/lib/blogImageUpload.ts", {}),
+      "@/database/config.mjs": { getDatabaseMode },
     },
     env,
   );
@@ -269,7 +282,7 @@ test("les images nécessitent une session et un jeton limité", async (t) => {
   });
 
   await t.test("une configuration manquante et un mauvais chemin sont refusés", async () => {
-    assert.equal((await loadRoute(true, {}).POST(request())).status, 500);
+    assert.equal((await loadRoute(true, { VERCEL: "1" }).POST(request())).status, 500);
     assert.equal((await loadRoute(true).POST(request("../../autre.txt"))).status, 400);
   });
 
@@ -285,4 +298,87 @@ test("les images nécessitent une session et un jeton limité", async (t) => {
     assert.ok(payload.validUntil > Date.now());
     assert.ok(payload.validUntil <= Date.now() + 15 * 60 * 1000);
   });
+});
+
+test("le développement choisit la base locale même si une URL de production existe", () => {
+  const url = "postgresql://test:test@production.example.invalid/database";
+  assert.equal(getDatabaseMode({ DATABASE_URL: url }), "local");
+  assert.equal(getDatabaseMode({ VERCEL: "1", VERCEL_ENV: "development", DATABASE_URL: url }), "local");
+  assert.equal(getDatabaseMode({ VERCEL: "1", VERCEL_ENV: "production", DATABASE_URL: url }), "neon");
+  const localKey = getDatabaseCacheNamespace({ DATABASE_URL: url });
+  const cloudKey = getDatabaseCacheNamespace({ VERCEL: "1", DATABASE_URL: url });
+  assert.notEqual(localKey, cloudKey);
+  assert.notEqual(localKey, getDatabaseCacheNamespace({ LOCAL_DATABASE_PATH: ".local/autre-base" }));
+  assert.ok(!cloudKey.includes("postgresql") && !cloudKey.includes("test:test"));
+});
+
+test("les articles locaux persistent après fermeture sans aucun appel à Neon", async (t) => {
+  const directory = await realpath(await mkdtemp(path.join(tmpdir(), "amj-local-db-test-")));
+  const env = { LOCAL_DATABASE_PATH: path.join(directory, "data"), DATABASE_URL: "postgresql://test:test@production.example.invalid/database" };
+  t.after(async () => {
+    await closeLocalDatabase(env);
+    const target = await realpath(directory);
+    assert.equal(target, directory);
+    assert.ok(path.basename(target).startsWith("amj-local-db-test-"));
+    await rm(target, { recursive: true, force: true });
+  });
+  let remoteCalls = 0;
+  const blog = loadBlog({ query: () => { remoteCalls++; throw new Error("Neon doit rester inutilisé."); } }, env);
+  assert.equal((await blog.getAllBlogPosts()).length, 0);
+  const image = "/api/local-images/12345678-1234-1234-1234-123456789abc.png";
+  let article = await blog.createBlogPost({ ...draft, cover_image_url: image });
+  assert.equal(article.cover_image_url, image);
+  await closeLocalDatabase(env);
+  assert.equal((await blog.getAllBlogPosts())[0].id, article.id);
+  article = await blog.updateBlogPost(article.id, { ...draft, status: "published", cover_image_url: image });
+  assert.equal((await blog.getPublishedBlogPostBySlug(article.slug)).id, article.id);
+
+  const localModule = new URL("../database/local.mjs", import.meta.url).href;
+  const child = spawnSync(process.execPath, ["--input-type=module", "-e", `
+    import { getLocalDatabase, closeLocalDatabase } from ${JSON.stringify(localModule)};
+    const env = ${JSON.stringify(env)};
+    try { await getLocalDatabase(env); await closeLocalDatabase(env); process.exitCode = 1; }
+    catch(error) { console.log(error.code); }
+  `], { encoding: "utf8", timeout: 15000 });
+  assert.equal(child.status, 0);
+  assert.ok(child.stdout.includes("LOCAL_DATABASE_LOCKED"));
+  assert.equal((await blog.getAllBlogPosts())[0].id, article.id);
+  await blog.deleteBlogPost(article.id);
+  assert.equal((await blog.getAllBlogPosts()).length, 0);
+  assert.equal(remoteCalls, 0);
+});
+
+test("les images locales sont enregistrées sur disque et le stockage distant est bloqué", async (t) => {
+  const directory = await realpath(await mkdtemp(path.join(tmpdir(), "amj-local-images-test-")));
+  t.after(async () => {
+    const target = await realpath(directory);
+    assert.equal(target, directory);
+    assert.ok(path.basename(target).startsWith("amj-local-images-test-"));
+    await rm(target, { recursive: true, force: true });
+  });
+  const images = loadModule("app/lib/blogImageUpload.ts", {});
+  const dependencies = {
+    "@/app/lib/adminSession": { isAdminRequestAuthenticated: () => true },
+    "@/app/lib/blogImageUpload": images,
+    "@/app/lib/localImages": { getLocalImagesDirectory: () => directory },
+    "@/database/config.mjs": { getDatabaseMode },
+  };
+  const post = loadModule("app/api/admin/images/local/route.ts", dependencies);
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XfaAAAAAASUVORK5CYII=", "base64");
+  const data = new FormData();
+  data.append("file", new File([png], "image.png", { type: "image/png" }));
+  const response = await post.POST(new NextRequest("http://localhost/api/admin/images/local", { method: "POST", body: data }));
+  assert.equal(response.status, 200);
+  const { url } = await response.json();
+  assert.ok(url.startsWith(images.LOCAL_IMAGE_URL_PREFIX));
+  const get = loadModule("app/api/local-images/[filename]/route.ts", dependencies);
+  const result = await get.GET(new NextRequest("http://localhost" + url), { params: Promise.resolve({ filename: url.split("/").pop() }) });
+  assert.equal(result.status, 200);
+  assert.equal(result.headers.get("content-type"), "image/png");
+  assert.deepEqual(Buffer.from(await result.arrayBuffer()), png);
+  assert.equal((await get.GET(new NextRequest("http://localhost/api/local-images/secret"), { params: Promise.resolve({ filename: "../.env.local" }) })).status, 404);
+  const deployed = loadModule("app/api/admin/images/local/route.ts", dependencies, { VERCEL: "1" });
+  assert.equal((await deployed.POST(new NextRequest("https://example.com/api/admin/images/local", { method: "POST" }))).status, 404);
+  const remote = loadModule("app/api/admin/images/route.ts", dependencies, { BLOB_READ_WRITE_TOKEN: "unused-in-development" });
+  assert.equal((await remote.POST(new NextRequest("http://localhost/api/admin/images", { method: "POST" }))).status, 409);
 });

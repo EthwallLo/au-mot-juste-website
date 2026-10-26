@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import BlogArticle from "@/app/components/blogArticle";
 import { BLOG_IMAGE_EXTENSIONS, BLOG_IMAGE_MAX_SIZE } from "@/app/lib/blogImageUpload";
@@ -16,6 +17,8 @@ import type { BlogPost, BlogStatus } from "@/app/lib/blog";
 type AdminBlogManagerProps = {
   initialPosts: BlogPost[];
   setupError?: string;
+  newsletterEnabled?: boolean;
+  localDatabase?: boolean;
 };
 
 type ArticleFormState = {
@@ -101,6 +104,8 @@ function serializeForm(form: ArticleFormState) {
 export default function AdminBlogManager({
   initialPosts,
   setupError,
+  newsletterEnabled = false,
+  localDatabase = false,
 }: AdminBlogManagerProps) {
   const router = useRouter();
   const [posts, setPosts] = useState(initialPosts);
@@ -198,16 +203,28 @@ export default function AdminBlogManager({
     setMessage("");
 
     try {
-      const blob = await upload(`articles/${crypto.randomUUID()}.${extension}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/admin/images",
-        contentType: file.type,
-      });
-
-      updateForm("cover_image_url", blob.url);
+      let imageUrl: string;
+      if (localDatabase) {
+        const data = new FormData();
+        data.append("file", file);
+        const response = await fetch("/api/admin/images/local", { method: "POST", body: data });
+        const result = await response.json();
+        if (!response.ok || typeof result.url !== "string") throw new Error("local-image-upload-failed");
+        imageUrl = result.url;
+      } else {
+        const blob = await upload(`articles/${crypto.randomUUID()}.${extension}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/images",
+          contentType: file.type,
+        });
+        imageUrl = blob.url;
+      }
+      updateForm("cover_image_url", imageUrl);
       setMessage("Image ajoutée.");
     } catch {
-      setMessage("Impossible d’ajouter l’image. Vérifiez votre connexion et la configuration Vercel Blob.");
+      setMessage(localDatabase
+        ? "Impossible d’ajouter l’image. Vérifiez les droits d’accès au dossier .local."
+        : "Impossible d’ajouter l’image. Vérifiez votre connexion et la configuration Vercel Blob.");
     } finally {
       setIsUploadingImage(false);
       input.value = "";
@@ -314,6 +331,8 @@ export default function AdminBlogManager({
               Administration des articles
             </h1>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
+          {newsletterEnabled ? <Link href="/admin/newsletter" className="rounded-md border border-[#B76E79] bg-white px-4 py-2 text-sm font-semibold text-brand-strong hover:bg-[#fff8f9]">Newsletter · test local</Link> : null}
           <button
             type="button"
             onClick={handleLogout}
@@ -321,6 +340,7 @@ export default function AdminBlogManager({
           >
             Se déconnecter
           </button>
+          </div>
         </div>
 
         {setupError ? (
@@ -328,6 +348,8 @@ export default function AdminBlogManager({
             {setupError}
           </p>
         ) : null}
+
+        {localDatabase ? <p className="mb-6 rounded-md border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">Base locale : les articles et les images créés ici restent sur cet ordinateur.</p> : null}
 
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <aside className="rounded-md bg-white p-4 shadow-sm">
@@ -675,6 +697,7 @@ export default function AdminBlogManager({
             }}
             headerImage={form.cover_image_url.trim() || "/optimized/image-carnet-2.avif"}
             onBack={closePreview}
+            newsletterEnabled={newsletterEnabled}
           />
         ) : null}
       </dialog>

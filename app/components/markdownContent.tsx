@@ -79,7 +79,7 @@ function getBlockKey(block: MarkdownBlock, index: number) {
   return `${index}-${block.type}-${block.items[0]?.slice(0, 16) ?? ""}`;
 }
 
-function parseMarkdownBlocks(content: string) {
+export function parseMarkdownBlocks(content: string) {
   const blocks: MarkdownBlock[] = [];
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   let paragraphLines: string[] = [];

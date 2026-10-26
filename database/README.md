@@ -1,19 +1,32 @@
-# Blog Neon et Vercel Blob
+# Bases des articles
 
-Les articles sont stockés dans PostgreSQL sur Neon. Les images sont envoyées
-directement depuis le navigateur vers un stockage Vercel Blob public, après
-vérification de la session d’administration.
+En développement, les articles sont enregistrés sur cet ordinateur avec PGlite
+(PostgreSQL embarqué), dans `.local/database`. Les images ajoutées depuis
+l’administration sont enregistrées dans `.local/images`. Ces dossiers ne sont
+pas suivis par Git et ne sont pas inclus dans les fichiers de déploiement.
+
+Sur Vercel, les articles utilisent Neon et les images Vercel Blob, avec les
+identifiants définis dans le tableau de bord Vercel. Une URL Neon présente sur
+l’ordinateur ne suffit pas à activer une connexion distante : le choix du
+stockage dépend de l’environnement, et `vercel dev` reste en mode local.
 
 ## Configuration
 
-1. Connecter Neon et le stockage Blob public au projet Vercel.
-2. Ajouter `DATABASE_URL` et `BLOB_READ_WRITE_TOKEN` dans `.env.local` pour le
-   développement, ainsi que dans les environnements Vercel utilisés.
-3. Exécuter `npm run db:setup` pour créer la table et son déclencheur de mise à
-   jour. La commande peut être relancée sans effacer les articles.
-4. Démarrer le site et ouvrir `/admin/blog` pour écrire un premier article.
+1. Renseigner les identifiants d’administration dans `.env.local`.
+2. Lancer `npm run dev`. La base locale est initialisée automatiquement au premier accès.
+3. Ouvrir `/admin/blog` pour créer des articles de test ; la base locale part vide.
 
-Le script `schema.sql` peut aussi être exécuté dans l’éditeur SQL de Neon.
+`npm run db:setup` permet aussi de préparer la base avant le démarrage du site.
+Arrêter le serveur avant cette commande, car une seule instance de PGlite doit
+ouvrir le même dossier. Les données persistent après l’arrêt et le redémarrage.
+
+`LOCAL_DATABASE_PATH` et `LOCAL_IMAGES_PATH` permettent de personnaliser les
+dossiers locaux. Les anciens identifiants distants peuvent être conservés dans
+un fichier `.env.production.local` privé ; ils ne sont pas utilisés par le
+stockage local. Sur Vercel, conserver `DATABASE_URL` et `BLOB_READ_WRITE_TOKEN`
+dans les variables de l’environnement concerné.
+
+Le script `schema.sql` reste compatible avec l’éditeur SQL de Neon.
 Les identifiants d’administration restent définis par `ADMIN_USERNAME`,
 `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET`.
 
@@ -21,8 +34,8 @@ Les images acceptées sont JPEG, PNG, WebP, GIF et AVIF, jusqu’à 5 Mo. L’ad
 renvoyée par Blob est enregistrée avec l’article lors de sa sauvegarde.
 
 Les articles ont trois statuts : `draft`, `scheduled` et `published`. Un article
-planifié doit avoir une date de publication. Relancer `npm run db:setup` ajoute
-les contraintes nécessaires sur une base existante, sans effacer les articles.
+planifié doit avoir une date de publication. L’initialisation locale applique
+le même schéma que Neon, sans effacer les articles.
 
 Les lectures publiques excluent les brouillons et les dates de publication
 futures. Les données mises en cache incluent les publications à venir, mais la

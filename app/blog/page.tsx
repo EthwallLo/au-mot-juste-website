@@ -4,6 +4,8 @@ import { getPublishedBlogPosts } from "@/app/lib/blog";
 import type { BlogPostPreview } from "@/app/lib/blog";
 import { createPageMetadata } from "@/app/lib/seo";
 import { connection } from "next/server";
+import NewsletterCallout from "@/app/components/newsletterCallout";
+import { isLocalNewsletterEnabled } from "@/app/lib/newsletterConfig";
 
 export const metadata = createPageMetadata({
   title: "Conseils de correction et d’écriture | Au mot juste",
@@ -208,6 +210,7 @@ export default async function BlogPage() {
           </div>
         )}
       </section>
+      {isLocalNewsletterEnabled() ? <NewsletterCallout /> : null}
     </div>
   );
 }

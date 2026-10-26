@@ -9,6 +9,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { createPageMetadata } from "./lib/seo";
 import { connection } from "next/server";
+import NewsletterCallout from "./components/newsletterCallout";
+import { isLocalNewsletterEnabled } from "./lib/newsletterConfig";
 
 export const metadata = createPageMetadata({
   title: "Correction et relecture de textes | Au mot juste",
@@ -36,6 +38,7 @@ function getBackgroundImage(url: string) {
 
 export default async function HomePage() {
   await connection();
+  const newsletterEnabled = isLocalNewsletterEnabled();
   let latestArticles: BlogPostPreview[] = [];
 
   try {
@@ -356,17 +359,14 @@ export default async function HomePage() {
       <section
         id="derniers-articles"
         aria-labelledby="derniers-articles-titre"
-        className="bg-white px-6 py-20 md:px-12"
+        className={"bg-white px-6 pt-20 md:px-12 " + (newsletterEnabled ? "pb-0" : "pb-20")}
       >
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-strong">
-                Carnet de correction
-              </p>
               <h2
                 id="derniers-articles-titre"
-                className="mt-3 text-3xl font-bold text-gray-800 after:mt-3 after:block after:h-1 after:w-[130px] after:bg-[#B76E79] after:content-['']"
+                className="text-3xl font-bold text-gray-800 after:mt-3 after:block after:h-1 after:w-[130px] after:bg-[#B76E79] after:content-['']"
               >
                 Derniers articles
               </h2>
@@ -447,6 +447,7 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+      {newsletterEnabled ? <NewsletterCallout /> : null}
     </div>
   );
 }

@@ -4,6 +4,8 @@ import AdminLoginForm from "./AdminLoginForm";
 import { isAdminAuthenticated } from "@/app/lib/adminSession";
 import { getAllBlogPosts } from "@/app/lib/blog";
 import type { BlogPost } from "@/app/lib/blog";
+import { isLocalNewsletterEnabled } from "@/app/lib/newsletterConfig";
+import { getDatabaseMode } from "@/database/config.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -44,5 +46,5 @@ export default async function AdminBlogPage() {
         : "Impossible de charger les articles.";
   }
 
-  return <AdminBlogManager initialPosts={articles} setupError={setupError} />;
+  return <AdminBlogManager initialPosts={articles} setupError={setupError} newsletterEnabled={isLocalNewsletterEnabled()} localDatabase={getDatabaseMode(process.env) === "local"} />;
 }

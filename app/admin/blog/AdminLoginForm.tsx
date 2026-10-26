@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminLoginForm() {
+export default function AdminLoginForm({ description = "Gestion des articles du blog" }: { description?: string }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +43,7 @@ export default function AdminLoginForm() {
       className="mx-auto w-full max-w-md rounded-md bg-white p-6 shadow-lg"
     >
       <h1 className="text-3xl font-bold text-gray-800">Administration</h1>
-      <p className="mt-2 text-sm text-gray-600">Gestion des articles du blog</p>
+      <p className="mt-2 text-sm text-gray-600">{description}</p>
 
       <div className="mt-8 space-y-4">
         <div>

@@ -2,10 +2,15 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequestAuthenticated } from "@/app/lib/adminSession";
 import { BLOG_IMAGE_MAX_SIZE, BLOG_IMAGE_EXTENSIONS } from "@/app/lib/blogImageUpload";
+import { getDatabaseMode } from "@/database/config.mjs";
 
 export async function POST(request: NextRequest) {
   if (!isAdminRequestAuthenticated(request)) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+  }
+
+  if (getDatabaseMode(process.env) === "local") {
+    return NextResponse.json({ error: "Les images de développement doivent être enregistrées dans le stockage local." }, { status: 409 });
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "db:setup": "node scripts/setup-database.mjs",
-    "test": "node --test tests/blog.test.mjs"
+    "test": "node --test tests/blog.test.mjs tests/newsletter.test.mjs"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.11",
     "@neondatabase/serverless": "^1.2.0",
     "@vercel/analytics": "^1.6.1",
     "@vercel/blob": "^2.8.2",
@@ -18,12 +19,12 @@
     "framer-motion": "^12.23.24",
     "next": "^16.1.1",
     "nodemailer": "^7.0.10",
+    "proper-lockfile": "^4.1.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
