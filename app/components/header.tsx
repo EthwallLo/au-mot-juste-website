@@ -32,8 +32,9 @@ export default function Header() {
           <Image
             src="/logo-moderne.svg"
             alt="Au mot juste"
-            width={140}
-            height={80}
+            width={500}
+            height={180}
+            className="h-auto w-[140px]"
           />
         </Link>
 

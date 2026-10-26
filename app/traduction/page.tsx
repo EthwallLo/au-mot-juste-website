@@ -1,5 +1,5 @@
-import Image from "next/image";
 import ServiceProcess from "../components/serviceProcess";
+import DocumentTypes from "../components/documentTypes";
 import { createPageMetadata } from "../lib/seo";
 
 export const metadata = createPageMetadata({
@@ -39,90 +39,7 @@ export default function TraductionPage() {
         </div>
       </section>
 
-      <section
-        id="corps"
-        aria-labelledby="types-traduction"
-        className="relative justify-center items-center bg-white"
-      >
-        <section className="py-20 bg-cover bg-center">
-          <h2
-            id="types-traduction"
-            className="text-center text-3xl font-bold text-brand-strong mb-16 after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
-          >
-            Quels types de documents ?
-          </h2>
-          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-12 px-6">
-            <div className="bg-white bg-opacity-90 rounded-2xl shadow-md p-8 text-center hover:shadow-lg transition">
-              <Image
-                src="/web.svg"
-                className="w-20 mx-auto mb-6"
-                alt=""
-                aria-hidden="true"
-                width={80}
-                height={80}
-              />
-              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
-                Contenus web
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Articles, pages de site, newsletters ou fiches produits rédigés
-                en anglais à traduire en français.
-              </p>
-            </div>
-            <div className="bg-white bg-opacity-90 rounded-2xl shadow-md p-8 text-center hover:shadow-lg transition">
-              <Image
-                src="/script.svg"
-                className="w-20 mx-auto mb-6"
-                alt=""
-                aria-hidden="true"
-                width={80}
-                height={80}
-              />
-              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
-                Manuscrits
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Romans, nouvelles, récits courts, essais ou extraits littéraires
-                à adapter de l&apos;anglais vers le français.
-              </p>
-            </div>
-            <div className="bg-white bg-opacity-90 rounded-2xl shadow-md p-8 text-center hover:shadow-lg transition">
-              <Image
-                src="/travaux.svg"
-                className="w-20 mx-auto mb-6"
-                alt=""
-                aria-hidden="true"
-                width={80}
-                height={80}
-              />
-              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
-                Travaux universitaires
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Résumés, présentations, dossiers ou documents
-                d&apos;accompagnement en anglais à rendre clairs en français.
-              </p>
-            </div>
-            <div className="bg-white bg-opacity-90 rounded-2xl shadow-md p-8 text-center hover:shadow-lg transition">
-              <Image
-                src="/docu.svg"
-                className="w-20 mx-auto mb-6"
-                alt=""
-                aria-hidden="true"
-                width={80}
-                height={80}
-              />
-              <h3 className="text-xl font-semibold mb-3 text-brand-strong">
-                Documents personnels
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Lettres, CV, biographies, documents administratifs ou supports
-                professionnels à traduire vers un français naturel et soigné.
-              </p>
-            </div>
-          </div>
-        </section>
-      </section>
+      <DocumentTypes service="traduction" />
 
       <section
         id="tarifs"

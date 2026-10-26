@@ -11,8 +11,8 @@ export default function Footer() {
             src="/logo-moderne.svg"
             alt=""
             aria-hidden="true"
-            width={160}
-            height={80}
+            width={500}
+            height={180}
             className="h-20 w-auto"
           />
         </div>
