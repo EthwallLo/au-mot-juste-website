@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CONTACT_FIELD_LIMITS, CONTACT_PHONE_ERROR_MESSAGE, CONTACT_PHONE_PATTERN, isValidContactPhone } from "../lib/contact";
 
 type FormStatus = {
   message: string;
@@ -21,6 +22,7 @@ export default function ContactForm() {
     const phone = (formData.get("phone")?.toString() ?? "").replace(/\s+/g, "");
     const subject = formData.get("subject")?.toString().trim() ?? "";
     const message = formData.get("message")?.toString().trim() ?? "";
+    const website = formData.get("website")?.toString() ?? "";
 
     if (!email) {
       setStatus({ message: "Le champ e-mail est obligatoire.", type: "error" });
@@ -41,9 +43,9 @@ export default function ContactForm() {
       return;
     }
 
-    if (phone && !/^\+?\d{10,15}$/.test(phone)) {
+    if (!isValidContactPhone(phone)) {
       setStatus({
-        message: "Veuillez saisir un numéro de téléphone valide (10 à 15 chiffres).",
+        message: CONTACT_PHONE_ERROR_MESSAGE,
         type: "error",
       });
       return;
@@ -56,7 +58,7 @@ export default function ContactForm() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, subject, message }),
+        body: JSON.stringify({ name, email, phone, subject, message, website }),
       });
 
       const data = await res.json();
@@ -153,6 +155,10 @@ export default function ContactForm() {
             </div>
 
             <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4 text-gray-900 mt-4">
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="contact-website">Site web</label>
+                <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+              </div>
               <div>
                 <label htmlFor="name" className="sr-only">
                   Nom
@@ -162,6 +168,7 @@ export default function ContactForm() {
                   name="name"
                   type="text"
                   autoComplete="name"
+                  maxLength={CONTACT_FIELD_LIMITS.name}
                   placeholder="Nom"
                   className="w-full bg-gray-100 py-2.5 px-4 text-sm rounded-md border border-gray-200 
                            focus:bg-transparent focus:border-gray-800 outline-none transition-all"
@@ -177,6 +184,7 @@ export default function ContactForm() {
                   name="email"
                   type="email"
                   autoComplete="email"
+                  maxLength={CONTACT_FIELD_LIMITS.email}
                   required
                   aria-required="true"
                   placeholder="E-mail"
@@ -195,10 +203,11 @@ export default function ContactForm() {
                   type="tel"
                   autoComplete="tel"
                   inputMode="tel"
-                  pattern={"\\s*\\+?(?:[0-9]\\s*){10,15}"}
+                  maxLength={CONTACT_FIELD_LIMITS.phone}
+                  pattern={CONTACT_PHONE_PATTERN}
                   onInvalid={(event) => {
                     event.currentTarget.setCustomValidity(
-                      "Veuillez saisir un numéro de téléphone valide (10 à 15 chiffres).",
+                      CONTACT_PHONE_ERROR_MESSAGE,
                     );
                   }}
                   onInput={(event) => event.currentTarget.setCustomValidity("")}
@@ -208,8 +217,9 @@ export default function ContactForm() {
                            focus:bg-transparent focus:border-gray-800 outline-none transition-all"
                 />
                 <p id="phone-help" className="sr-only">
-                  Saisissez un numéro de téléphone sur 10 à 15 chiffres, avec ou
-                  sans espaces, par exemple 06 12 34 56 78 ou +33 6 12 34 56 78.
+                  Saisissez un numéro français à 10 chiffres ou un numéro
+                  international avec son indicatif, avec ou sans espaces, par
+                  exemple 06 12 34 56 78 ou +33 6 12 34 56 78.
                 </p>
               </div>
 
@@ -223,6 +233,7 @@ export default function ContactForm() {
                   type="text"
                   autoComplete="off"
                   placeholder="Sujet"
+                  maxLength={CONTACT_FIELD_LIMITS.subject}
                   className="w-full bg-gray-100 py-2.5 px-4 text-sm rounded-md border border-gray-200 
                            focus:bg-transparent focus:border-gray-800 outline-none transition-all"
                 />
@@ -237,6 +248,7 @@ export default function ContactForm() {
                   name="message"
                   placeholder="Message"
                   rows={6}
+                  maxLength={CONTACT_FIELD_LIMITS.message}
                   required
                   aria-required="true"
                   className="w-full bg-gray-100 px-4 text-sm rounded-md pt-3 border border-gray-200 

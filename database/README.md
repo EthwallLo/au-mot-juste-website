@@ -46,3 +46,16 @@ l’administration, sans tâche planifiée ni écriture automatique en base.
 
 Le cache des données expire après 60 secondes et est invalidé lors d’une
 création, modification ou suppression depuis l’administration.
+
+## Formulaire de contact
+
+Le formulaire utilise aussi cette base pour limiter les demandes à cinq par
+heure et par adresse IP. La table `contact_rate_limits` est créée automatiquement
+au premier envoi valide, indépendamment de la newsletter. Les adresses IP ne
+sont pas enregistrées en clair : les compteurs utilisent une empreinte HMAC
+avec `EMAIL_PASS`, déjà nécessaire à l’envoi des mails. Les compteurs expirés
+sont supprimés lors des demandes suivantes.
+
+La protection utilise PGlite en local et Neon sur Vercel. Si le compteur ou le
+service de mail est indisponible, le formulaire affiche un message d’erreur et
+n’annonce pas un envoi réussi. Aucune variable supplémentaire n’est nécessaire.

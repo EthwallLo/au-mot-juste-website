@@ -105,50 +105,27 @@ export default async function HomePage() {
       <section
         id="decouvrir"
         aria-labelledby="pourquoi-correctrice"
-        className="relative justify-center items-center bg-white"
-        style={{ minHeight: "40vh", paddingTop: "5rem", paddingBottom: "5rem" }}
+        className="relative bg-white py-12 sm:py-14"
       >
         <h2
           id="pourquoi-correctrice"
-          className="text-2xl sm:text-3xl font-bold mb-10 text-brand-strong relative text-center
+          className="text-2xl sm:text-3xl font-bold mb-8 text-brand-strong relative text-center
           after:content-[''] after:block after:w-[130px] after:h-1 after:bg-[#B76E79] after:mt-3 after:mx-auto"
         >
           Pourquoi faire appel à une correctrice-relectrice ?
         </h2>
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:px-12 px-6 text-center md:text-left">
-          <div>
-            <p className="text-center text-gray-700 mb-6 leading-relaxed">
-              Même lorsqu’on maîtrise parfaitement la langue, il est extrêmement
-              difficile de repérer ses propres erreurs : notre cerveau anticipe
-              ce que l’on veut dire et ne voit plus les fautes, les maladresses
-              ou les incohérences qui peuvent s’y glisser.
-            </p>
-
-            <p className="text-center text-gray-700 leading-relaxed">
-              Que vous soyez étudiant, professionnel ou auteur, la qualité de
-              vos écrits influence fortement la façon dont on perçoit votre
-              sérieux et vos compétences. Un document avec quelques erreurs
-              suffit parfois à décrédibiliser un travail pourtant solide.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-center text-gray-700 mb-6 leading-relaxed">
-              La correction ne se limite pas à enlever les fautes. C’est un
-              véritable travail de précision : harmonisation de la typographie,
-              amélioration de la fluidité des phrases, reformulations douces
-              pour rendre le texte plus clair, suppression des répétitions et
-              vérification de la cohérence d’ensemble.
-            </p>
-
-            <p className="text-center text-gray-700 leading-relaxed">
-              Faire appel à une correctrice-relectrice, c’est donc investir dans
-              une communication plus claire, plus percutante et plus
-              professionnelle. C’est l’assurance d’un texte qui reflète
-              réellement votre intention, vos compétences et votre exigence.
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:px-12 px-6 text-center text-gray-700 leading-relaxed">
+          <p>
+            À force de relire son propre texte, on finit par ne plus voir
+            certaines erreurs. Un regard extérieur aide à repérer les fautes,
+            les maladresses et les incohérences qui nous échappent.
+          </p>
+          <p>
+            Je vous propose une relecture attentive pour rendre vos écrits plus
+            clairs et plus fluides, dans le respect de votre style et de ce que
+            vous souhaitez transmettre.
+          </p>
         </div>
       </section>
 

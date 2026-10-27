@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:setup": "node scripts/setup-database.mjs",
-    "test": "node --test tests/blog.test.mjs tests/newsletter.test.mjs tests/newsletter-production.test.mjs"
+    "test": "node --test tests/blog.test.mjs tests/newsletter.test.mjs tests/newsletter-production.test.mjs tests/contact.test.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.11",
